@@ -1,0 +1,62 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id           String     @id @default(uuid())
+  email        String     @unique
+  name         String
+  passwordHash String
+  role         Role       @default(USER)
+  avatar       String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  diagrams     Diagram[]
+  activities   Activity[]
+
+  @@map("users")
+}
+
+model Diagram {
+  id        String   @id @default(uuid())
+  name      String   @default("Untitled Flow")
+  nodes     Json     @default("[]")
+  edges     Json     @default("[]")
+  theme     String   @default("dark")
+  thumbnail String?
+  isPublic  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("diagrams")
+}
+
+model Activity {
+  id        String   @id @default(uuid())
+  action    String   // "USER_REGISTERED", "USER_LOGIN", "DIAGRAM_CREATED", "DIAGRAM_UPDATED", "DIAGRAM_DELETED"
+  details   String?  // Diagram title or metadata
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("activities")
+}

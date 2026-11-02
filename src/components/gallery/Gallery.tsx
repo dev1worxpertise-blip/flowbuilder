@@ -163,23 +163,23 @@ export function Gallery({ onOpen }: { onOpen: (d: Diagram) => void }) {
       <header
         className={`sticky top-0 z-30 w-full border-b backdrop-blur-md transition-colors duration-200 ${
           isLight
-            ? "bg-white/90 border-slate-200/90 shadow-xs"
+            ? "bg-white/95 border-slate-200/90 shadow-xs"
             : "bg-[#0d111a]/95 border-slate-800 shadow-sm"
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-          {/* Brand Identity & Badges */}
-          <div className="flex items-center gap-3.5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex flex-wrap items-center justify-between gap-2.5 sm:gap-3">
+          {/* Brand Identity & Badges (Left) */}
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
             {/* Worxpertise Official Logo */}
             <div
-              className={`p-1.5 px-2 rounded-xl border shadow-sm flex items-center justify-center shrink-0 transition ${
+              className={`p-1 px-1.5 rounded-xl border shadow-xs flex items-center justify-center shrink-0 transition ${
                 isLight ? "bg-white border-slate-200" : "bg-white/95 border-slate-700/60"
               }`}
             >
               <img
                 src="https://worxpertise.com/wp-content/themes/worxpertise/assets/images/worx-header-logo.png"
                 alt="Worxpertise Logo"
-                className="h-6 w-auto object-contain"
+                className="h-5 sm:h-6 w-auto object-contain"
                 onError={(e) => {
                   const parent = (e.target as HTMLElement).parentElement;
                   if (parent) {
@@ -191,9 +191,9 @@ export function Gallery({ onOpen }: { onOpen: (d: Diagram) => void }) {
             </div>
 
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                 <h1
-                  className={`text-xl sm:text-2xl font-black tracking-tight ${
+                  className={`text-lg sm:text-xl font-black tracking-tight ${
                     isLight ? "text-[#c00000]" : "text-white"
                   }`}
                 >
@@ -202,10 +202,10 @@ export function Gallery({ onOpen }: { onOpen: (d: Diagram) => void }) {
 
                 {user && (
                   <span
-                    className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold border flex items-center gap-1 shrink-0 ${
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-semibold border flex items-center gap-1 shrink-0 ${
                       isLight
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-200/80"
-                        : "bg-emerald-950/60 text-emerald-300 border-emerald-800/80"
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        : "bg-emerald-950/60 text-emerald-300 border-emerald-800"
                     }`}
                     title="Diagrams sync directly to PostgreSQL cloud database"
                   >
@@ -215,7 +215,7 @@ export function Gallery({ onOpen }: { onOpen: (d: Diagram) => void }) {
 
                 {isAdmin && (
                   <span
-                    className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold border flex items-center gap-1 shrink-0 ${
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-bold border flex items-center gap-1 shrink-0 ${
                       isLight
                         ? "bg-rose-50 text-[#c00000] border-[#c00000]/25 shadow-xs"
                         : "bg-amber-950/60 text-amber-300 border-amber-800"
@@ -227,50 +227,50 @@ export function Gallery({ onOpen }: { onOpen: (d: Diagram) => void }) {
               </div>
 
               <p
-                className={`text-[11px] font-medium mt-0.5 ${
+                className={`text-[10px] sm:text-[11px] font-medium mt-0.5 truncate max-w-xs sm:max-w-md ${
                   isLight ? "text-slate-500" : "text-slate-400"
                 }`}
               >
                 {user
-                  ? `Signed in as ${user.name} (${user.role}) — diagrams sync to PostgreSQL`
+                  ? `Signed in as ${user.name} (${user.role}) — PostgreSQL synced`
                   : "Worxpertise Flow Studio — Execute. Enable. Excel."}
               </p>
             </div>
           </div>
 
-          {/* Right Header Controls */}
-          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 self-end md:self-auto">
+          {/* Right Header Controls - Compact, No Overflow, Never Overlaps */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
             {/* Theme Toggle (Light / Dark) */}
             <button
               onClick={toggleThemeMode}
               title={`Switch to ${isLight ? "Dark" : "Light"} Palette`}
-              className={`rounded-xl px-2.5 py-1.5 text-xs font-semibold border transition flex items-center gap-1.5 shadow-xs ${
+              className={`rounded-xl px-2 sm:px-2.5 py-1.5 text-xs font-semibold border transition flex items-center gap-1 shadow-xs shrink-0 ${
                 isLight
                   ? "bg-slate-100 hover:bg-slate-200/80 border-slate-300 text-slate-700"
                   : "bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200"
               }`}
             >
               <span>{isLight ? "🌙" : "☀️"}</span>
-              <span className="hidden sm:inline">{isLight ? "Dark Theme" : "Worxpertise Light"}</span>
+              <span className="hidden xl:inline">{isLight ? "Dark" : "Light"}</span>
             </button>
 
             {isAdmin && (
               <button
                 onClick={() => setIsAdminDashboardOpen(true)}
-                className={`rounded-xl px-3 py-1.5 text-xs font-semibold border transition flex items-center gap-1.5 shadow-xs ${
+                className={`rounded-xl px-2.5 py-1.5 text-xs font-semibold border transition flex items-center gap-1 shadow-xs shrink-0 ${
                   isLight
                     ? "bg-amber-50 hover:bg-amber-100/80 border-amber-300/80 text-amber-800"
                     : "bg-amber-950/40 hover:bg-amber-900/50 border-amber-800/80 text-amber-300"
                 }`}
               >
                 <span>⚙️</span>
-                <span className="hidden sm:inline">Admin Dashboard</span>
+                <span className="hidden sm:inline">Admin</span>
               </button>
             )}
 
             <button
               onClick={() => setIsTemplateModalOpen(true)}
-              className={`rounded-xl px-3 py-1.5 text-xs font-semibold border transition flex items-center gap-1.5 shadow-xs ${
+              className={`rounded-xl px-2.5 py-1.5 text-xs font-semibold border transition flex items-center gap-1 shadow-xs shrink-0 ${
                 isLight
                   ? "bg-white hover:bg-slate-50 border-slate-300 text-slate-700 hover:text-slate-900"
                   : "bg-[#151b27] hover:bg-slate-800 border-[#232c3d] text-slate-200 hover:text-white"
@@ -286,11 +286,11 @@ export function Gallery({ onOpen }: { onOpen: (d: Diagram) => void }) {
             {/* + New Diagram Button in Worxpertise Crimson Red */}
             <button
               onClick={newDiagram}
-              className="rounded-xl bg-[#c00000] hover:bg-[#a00000] active:scale-[0.98] px-4 py-2 text-xs sm:text-sm font-bold text-white transition-all shadow-md shadow-[#c00000]/25 flex items-center gap-1.5 shrink-0"
+              className="rounded-xl bg-[#c00000] hover:bg-[#a00000] active:scale-[0.98] px-3 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm font-bold text-white transition-all shadow-md shadow-[#c00000]/25 flex items-center gap-1 shrink-0"
               title="Create a new flowchart diagram"
             >
               <span className="text-sm leading-none">+</span>
-              <span>New Diagram</span>
+              <span className="hidden xs:inline">New Diagram</span>
             </button>
           </div>
         </div>

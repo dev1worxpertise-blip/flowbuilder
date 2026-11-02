@@ -31,7 +31,7 @@ export function PillNode({ id, data, selected }: NodeProps & { data: NodeData })
 
   return (
     <div
-      className="group relative flex items-center justify-center rounded-full px-5 py-2.5 text-center backdrop-blur transition hover:scale-[1.02]"
+      className="group relative flex items-center justify-center rounded-full px-5 py-2.5 text-center backdrop-blur transition-shadow"
       style={{
         minWidth: 140,
         maxWidth: 240,

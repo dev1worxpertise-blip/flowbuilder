@@ -12,6 +12,7 @@ import {
   type EdgeChange,
   type Connection,
   useReactFlow,
+  ConnectionMode,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useEditorStore } from "../../store/editorStore";
@@ -143,7 +144,8 @@ export function Canvas({
       edges={diagram.edges as any}
       nodeTypes={nodeTypes}
       edgeTypes={edgeTypes}
-      connectionMode={"loose" as any}
+      connectionMode={ConnectionMode.Loose}
+      connectionRadius={32}
       colorMode={isLight ? ("light" as any) : ("dark" as any)}
       snapToGrid={snapToGrid}
       snapGrid={[20, 20]}

@@ -23,16 +23,24 @@ export function DeleteButton({ id, className = "-top-2 -right-2" }: { id: string
 
 const SIDES = [Position.Top, Position.Right, Position.Bottom, Position.Left];
 
-/** Target + source handle on each side so any side can both send and receive
- *  connections (connectionMode="loose"); shared id lets stored edges resolve. */
+/** Single universal handle per side with connectionMode="loose".
+ *  Allows both starting and ending connections from any side (top, right, bottom, left).
+ *  Includes expanded click/drag area (before:-inset-3) and crosshair cursor. */
 export function SideHandles({ color }: { color: string }) {
   return (
     <>
       {SIDES.map((p) => (
-        <Fragment key={p}>
-          <Handle type="target" position={p} id={p} style={{ background: color, width: 8, height: 8 }} />
-          <Handle type="source" position={p} id={p} style={{ background: color, width: 8, height: 8 }} />
-        </Fragment>
+        <Handle
+          key={p}
+          type="source"
+          position={p}
+          id={p}
+          isConnectable={true}
+          isConnectableStart={true}
+          isConnectableEnd={true}
+          className="!w-3 !h-3 !border-2 !border-white hover:!scale-150 transition-all cursor-crosshair z-30 shadow-md !opacity-85 hover:!opacity-100 before:content-[''] before:absolute before:-inset-3 before:cursor-crosshair"
+          style={{ background: color }}
+        />
       ))}
     </>
   );

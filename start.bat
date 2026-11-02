@@ -10,7 +10,10 @@ echo [1/3] Checking PostgreSQL Database...
 "C:\Program Files\PostgreSQL\18\bin\pg_isready.exe" -h 127.0.0.1 -p 5432 >nul 2>&1
 if %errorlevel% neq 0 (
     echo Starting PostgreSQL Database Server...
-    start "" /B "C:\Program Files\PostgreSQL\18\bin\pg_ctl.exe" start -D "C:\Program Files\PostgreSQL\18\data" -o "-h 127.0.0.1" >nul 2>&1
+    if exist "C:\Program Files\PostgreSQL\18\data\postmaster.pid" (
+        del /f /q "C:\Program Files\PostgreSQL\18\data\postmaster.pid" >nul 2>&1
+    )
+    start "" /B "C:\Program Files\PostgreSQL\18\bin\postgres.exe" -D "C:\Program Files\PostgreSQL\18\data" -h 127.0.0.1 >nul 2>&1
     timeout /t 3 /nobreak >nul
 ) else (
     echo PostgreSQL Database is already running.

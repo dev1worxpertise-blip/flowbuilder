@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useEditorStore } from "../../store/editorStore";
 import { useAuthStore } from "../../store/authStore";
-import { PATH_KINDS } from "../../types";
+import { PATH_KINDS, CANVAS_COLOR_PRESETS } from "../../types";
 import { diagramToJson, diagramFromJson, downloadDataUrl } from "../../lib/exportDiagram";
 import { UserMenu } from "../auth/UserMenu";
 import { ShortcutsHelpModal } from "./ShortcutsHelpModal";
@@ -52,6 +52,7 @@ export function Toolbar({
   const setAllEdgesPathKind = useEditorStore((s) => s.setAllEdgesPathKind);
   const showMiniMap = useEditorStore((s) => s.showMiniMap);
   const toggleMiniMap = useEditorStore((s) => s.toggleMiniMap);
+  const setCanvasColor = useEditorStore((s) => s.setCanvasColor);
   const user = useAuthStore((s) => s.user);
 
   const [showShortcuts, setShowShortcuts] = useState(false);
@@ -59,11 +60,13 @@ export function Toolbar({
   const [showAiModal, setShowAiModal] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [showRoutingMenu, setShowRoutingMenu] = useState(false);
+  const [showCanvasColorMenu, setShowCanvasColorMenu] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [gifProgress, setGifProgress] = useState<number | null>(null);
 
   const fileRef = useRef<HTMLInputElement>(null);
   const routingRef = useRef<HTMLDivElement>(null);
+  const canvasColorRef = useRef<HTMLDivElement>(null);
   const exportRef = useRef<HTMLDivElement>(null);
 
   // Close menus on outside click
@@ -71,6 +74,9 @@ export function Toolbar({
     function handleClickOutside(event: MouseEvent) {
       if (routingRef.current && !routingRef.current.contains(event.target as Node)) {
         setShowRoutingMenu(false);
+      }
+      if (canvasColorRef.current && !canvasColorRef.current.contains(event.target as Node)) {
+        setShowCanvasColorMenu(false);
       }
       if (exportRef.current && !exportRef.current.contains(event.target as Node)) {
         setShowExportMenu(false);
@@ -283,6 +289,116 @@ export function Toolbar({
                   ⚡ Convert all to "{currentRoutingMeta.label}"
                 </button>
               </div>
+            </div>
+          )}
+        </div>
+
+        {/* Canvas Background Color Picker Dropdown */}
+        <div className="relative" ref={canvasColorRef}>
+          <button
+            className="rounded-lg border border-[#232c3d] bg-[#151b27] px-2 py-1 text-xs font-semibold text-slate-300 hover:text-white hover:border-slate-600 transition flex items-center gap-1.5 shrink-0"
+            onClick={() => setShowCanvasColorMenu(!showCanvasColorMenu)}
+            title={`Canvas Background Color (${diagram.canvasColor || "#0a0d15"})`}
+          >
+            <span
+              className="w-3.5 h-3.5 rounded-full border border-white/20 shadow-sm shrink-0"
+              style={{ backgroundColor: diagram.canvasColor || "#0a0d15" }}
+            />
+            <span className="hidden 2xl:inline">Canvas</span>
+            <span className="text-[9px] text-slate-500">▾</span>
+          </button>
+
+          {showCanvasColorMenu && (
+            <div className="absolute top-full left-0 mt-1.5 w-64 rounded-xl border border-[#232c3d] bg-[#0d111a] p-3 shadow-2xl backdrop-blur-md z-50 animate-in fade-in space-y-2.5">
+              <div className="flex items-center justify-between border-b border-[#232c3d] pb-1.5">
+                <span className="text-[11px] font-bold text-white flex items-center gap-1">
+                  <span>🎨</span> Canvas Color
+                </span>
+                <span className="text-[10px] font-mono text-slate-400">
+                  {diagram.canvasColor || "#0a0d15"}
+                </span>
+              </div>
+
+              {/* Presets Grid */}
+              <div className="space-y-1">
+                <div className="text-[10px] uppercase font-bold tracking-wider text-slate-500">
+                  Preset Themes
+                </div>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {CANVAS_COLOR_PRESETS.map((preset) => {
+                    const isActive = (diagram.canvasColor || "#0a0d15").toLowerCase() === preset.color.toLowerCase();
+                    return (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => {
+                          setCanvasColor(preset.color);
+                          setShowCanvasColorMenu(false);
+                        }}
+                        title={preset.name}
+                        className={`group relative flex flex-col items-center justify-center p-1.5 rounded-lg border transition ${
+                          isActive
+                            ? "border-[#c00000] ring-1 ring-[#c00000]/60 bg-white/5"
+                            : "border-[#232c3d] hover:border-slate-500 hover:bg-white/5"
+                        }`}
+                      >
+                        <span
+                          className="w-5 h-5 rounded-full shadow-inner border border-white/10 flex items-center justify-center text-[10px]"
+                          style={{
+                            backgroundColor: preset.color,
+                            borderColor: preset.border || "rgba(255,255,255,0.15)",
+                          }}
+                        >
+                          {isActive && <span className={preset.isDark ? "text-white" : "text-slate-900"}>✓</span>}
+                        </span>
+                        <span className="text-[9px] text-slate-400 group-hover:text-slate-200 mt-1 truncate max-w-[48px] text-center">
+                          {preset.id}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Custom Color Input */}
+              <div className="pt-2 border-t border-[#232c3d] space-y-1.5">
+                <div className="text-[10px] uppercase font-bold tracking-wider text-slate-500">
+                  Custom Hex
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={diagram.canvasColor || "#0a0d15"}
+                    onChange={(e) => setCanvasColor(e.target.value)}
+                    className="w-7 h-7 rounded border border-[#232c3d] bg-transparent cursor-pointer shrink-0"
+                    title="Pick custom color"
+                  />
+                  <input
+                    type="text"
+                    value={diagram.canvasColor || "#0a0d15"}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
+                        setCanvasColor(val);
+                      }
+                    }}
+                    placeholder="#0a0d15"
+                    className="flex-1 rounded-md bg-[#151b27] border border-[#232c3d] px-2 py-1 text-xs font-mono text-white focus:border-[#c00000] focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Reset to Default */}
+              <button
+                type="button"
+                onClick={() => {
+                  setCanvasColor("#0a0d15");
+                  setShowCanvasColorMenu(false);
+                }}
+                className="w-full text-center py-1 text-[11px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-md border border-[#232c3d] transition"
+              >
+                ↺ Reset to Worxpertise Default
+              </button>
             </div>
           )}
         </div>

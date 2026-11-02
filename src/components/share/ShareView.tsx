@@ -194,8 +194,13 @@ export function ShareView({
             colorMode="dark"
             fitView
             proOptions={{ hideAttribution: true }}
+            style={{ backgroundColor: diagram.canvasColor || "#0a0d15" }}
           >
-            <Background color="#1f2937" gap={20} />
+            <Background
+              color={diagram.canvasColor ? "rgba(100, 116, 139, 0.3)" : "#1f2937"}
+              bgColor={diagram.canvasColor || "#0a0d15"}
+              gap={20}
+            />
             <Controls />
             <SimulationDock />
           </ReactFlow>

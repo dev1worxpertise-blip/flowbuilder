@@ -24,7 +24,7 @@ export function ExportModal({ diagram, isOpen, onClose, viewportElement }: Expor
   // Poster Tab State
   const [posterFormat, setPosterFormat] = useState<"png" | "svg">("png");
   const [posterScale, setPosterScale] = useState<number>(2);
-  const [posterBg, setPosterBg] = useState<string>("#0a0e1a");
+  const [posterBg, setPosterBg] = useState<string>(diagram.canvasColor || "#0a0e1a");
   const [includeHeader, setIncludeHeader] = useState<boolean>(true);
   const [isExportingPoster, setIsExportingPoster] = useState(false);
 

@@ -57,5 +57,5 @@ export function buildHdlTemplate(): Diagram {
     edge("e7", "n4", "n5", "#60a5fa"),
     edge("e8", "n5", "n6", "#fbbf24"),
   ];
-  return { id: HDL_TEMPLATE_ID, name: "HDL Customer Lifecycle", createdAt: now, updatedAt: now, nodes, edges, theme: "dark" };
+  return { id: HDL_TEMPLATE_ID, name: "HDL Customer Lifecycle", createdAt: now, updatedAt: now, nodes, edges, theme: "dark", canvasColor: "#0a0d15" };
 }

@@ -155,6 +155,48 @@ export interface FlowEdge {
   data: EdgeData;
 }
 
+export interface CanvasColorPreset {
+  id: string;
+  name: string;
+  color: string;
+  isDark: boolean;
+  border?: string;
+}
+
+export const CANVAS_COLOR_PRESETS: CanvasColorPreset[] = [
+  { id: "default", name: "Worxpertise Dark (Default)", color: "#0a0d15", isDark: true },
+  { id: "midnight", name: "Midnight Navy", color: "#060913", isDark: true },
+  { id: "oled", name: "OLED Pitch Black", color: "#000000", isDark: true },
+  { id: "slate", name: "Deep Slate", color: "#0f172a", isDark: true },
+  { id: "charcoal", name: "Charcoal Gray", color: "#18181b", isDark: true },
+  { id: "burgundy", name: "Worxpertise Wine", color: "#1c080a", isDark: true },
+  { id: "forest", name: "Deep Forest", color: "#061a12", isDark: true },
+  { id: "purple", name: "Deep Purple", color: "#130a24", isDark: true },
+  { id: "blueprint", name: "Blueprint Navy", color: "#0b213f", isDark: true },
+  { id: "paper", name: "Clean Paper", color: "#f8fafc", isDark: false, border: "#cbd5e1" },
+  { id: "sand", name: "Warm Cream", color: "#fafaf9", isDark: false, border: "#d6d3d1" },
+  { id: "cool-gray", name: "Cool Gray", color: "#f1f5f9", isDark: false, border: "#cbd5e1" },
+  { id: "pure-white", name: "Pure White", color: "#ffffff", isDark: false, border: "#e2e8f0" },
+];
+
+export function isLightColor(hex?: string): boolean {
+  if (!hex || hex === "transparent") return false;
+  const clean = hex.replace("#", "");
+  if (clean.length !== 6 && clean.length !== 3) return false;
+  let r = 0, g = 0, b = 0;
+  if (clean.length === 6) {
+    r = parseInt(clean.substring(0, 2), 16);
+    g = parseInt(clean.substring(2, 4), 16);
+    b = parseInt(clean.substring(4, 6), 16);
+  } else if (clean.length === 3) {
+    r = parseInt(clean[0] + clean[0], 16);
+    g = parseInt(clean[1] + clean[1], 16);
+    b = parseInt(clean[2] + clean[2], 16);
+  }
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.55;
+}
+
 export interface Diagram {
   id: string;
   name: string;
@@ -164,6 +206,7 @@ export interface Diagram {
   nodes: FlowNode[];
   edges: FlowEdge[];
   theme: "dark";
+  canvasColor?: string;
 }
 
 export function uid(): string {
@@ -214,5 +257,6 @@ export function createEmptyDiagram(name: string): Diagram {
     nodes: [],
     edges: [],
     theme: "dark",
+    canvasColor: "#0a0d15",
   };
 }

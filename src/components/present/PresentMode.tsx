@@ -397,8 +397,13 @@ function PresentContent({ onExit }: { onExit: () => void }) {
           fitView
           fitViewOptions={{ padding: 0.22, maxZoom: 1.0 }}
           proOptions={{ hideAttribution: true }}
+          style={{ backgroundColor: diagram.canvasColor || "#0a0d15" }}
         >
-          <Background color="#111827" gap={24} />
+          <Background
+            color={diagram.canvasColor ? "rgba(100, 116, 139, 0.3)" : "#111827"}
+            bgColor={diagram.canvasColor || "#0a0d15"}
+            gap={24}
+          />
           <ZoomControls />
           <VerticalScrollbar bounds={bounds} />
           <SimulationDock />

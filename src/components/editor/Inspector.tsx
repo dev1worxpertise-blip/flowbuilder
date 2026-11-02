@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { Icon } from "@iconify/react";
 import { useEditorStore } from "../../store/editorStore";
-import { ACCENTS, PATH_KINDS, HEALTH_STATUS_CONFIG, type NodeHealthStatus } from "../../types";
+import { ACCENTS, PATH_KINDS, HEALTH_STATUS_CONFIG, CANVAS_COLOR_PRESETS, type NodeHealthStatus } from "../../types";
 import { POPULAR_ICONS } from "../../lib/iconLibrary";
 import { IconPickerModal } from "./IconPickerModal";
 import { useWebhookStore, getWebhookEndpointUrl, generateCurlSnippet } from "../../store/webhookStore";
@@ -24,6 +24,12 @@ export function Inspector({ selection, onClearSelection }: { selection: Sel; onC
   const distributeNodes = useEditorStore((s) => s.distributeNodes);
   const bulkUpdateNodeData = useEditorStore((s) => s.bulkUpdateNodeData);
   const removeMultipleNodes = useEditorStore((s) => s.removeMultipleNodes);
+  const setCanvasColor = useEditorStore((s) => s.setCanvasColor);
+  const snapToGrid = useEditorStore((s) => s.snapToGrid);
+  const toggleSnapToGrid = useEditorStore((s) => s.toggleSnapToGrid);
+  const showMiniMap = useEditorStore((s) => s.showMiniMap);
+  const toggleMiniMap = useEditorStore((s) => s.toggleMiniMap);
+  const autoLayout = useEditorStore((s) => s.autoLayout);
   const [showIconPicker, setShowIconPicker] = useState(false);
   const [iconSearch, setIconSearch] = useState("");
   const [copiedWebhook, setCopiedWebhook] = useState<string | null>(null);
@@ -44,13 +50,216 @@ export function Inspector({ selection, onClearSelection }: { selection: Sel; onC
     ).slice(0, 16);
   }, [iconSearch]);
 
-  if (!selection || !diagram)
+  if (!selection || !diagram) {
+    const currentCanvasColor = diagram?.canvasColor || "#0a0d15";
+    const currentPreset = CANVAS_COLOR_PRESETS.find(
+      (p) => p.color.toLowerCase() === currentCanvasColor.toLowerCase()
+    );
+
     return (
-      <aside className="w-72 shrink-0 border-l border-gray-800 p-4 text-xs text-gray-500">
-        <p className="font-semibold text-gray-400 mb-1">Inspector</p>
-        <p>Select a block or connector line to customize its properties, colors, animations, and branch labels.</p>
+      <aside className="w-72 shrink-0 border-l border-gray-800 p-4 space-y-4 text-xs overflow-y-auto max-h-full select-none">
+        {/* Header */}
+        <div className="border-b border-gray-800 pb-2">
+          <div className="flex items-center justify-between">
+            <span className="font-bold text-sm text-gray-200">Canvas Settings</span>
+            <span className="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700/60 font-semibold">
+              Board
+            </span>
+          </div>
+          <p className="text-[11px] text-gray-400 mt-0.5">Customize workspace background and grid layout.</p>
+        </div>
+
+        {/* 1. Canvas Background Color */}
+        <div className="space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-gray-300">Background Color</span>
+            <span className="font-mono text-[11px] text-sky-400 font-medium">
+              {currentCanvasColor}
+            </span>
+          </div>
+
+          {/* Active Color Preview Pill */}
+          <div className="flex items-center gap-2.5 p-2 rounded-lg bg-gray-900 border border-gray-800 shadow-inner">
+            <span
+              className="w-8 h-8 rounded-md shadow-md border border-white/20 shrink-0"
+              style={{ backgroundColor: currentCanvasColor }}
+            />
+            <div className="min-w-0 flex-1">
+              <div className="font-semibold text-xs text-white truncate">
+                {currentPreset?.name || "Custom Color"}
+              </div>
+              <div className="text-[10px] text-gray-400 font-mono truncate">
+                {currentCanvasColor}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setCanvasColor("#0a0d15")}
+              className="text-[10px] text-gray-400 hover:text-white px-1.5 py-0.5 rounded bg-gray-800 border border-gray-700 hover:border-gray-600 transition shrink-0"
+              title="Reset to default background (#0a0d15)"
+            >
+              ↺ Reset
+            </button>
+          </div>
+
+          {/* Presets Grid */}
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1.5">
+              Theme Palette
+            </span>
+            <div className="grid grid-cols-4 gap-1.5">
+              {CANVAS_COLOR_PRESETS.map((preset) => {
+                const isActive = currentCanvasColor.toLowerCase() === preset.color.toLowerCase();
+                return (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => setCanvasColor(preset.color)}
+                    title={`${preset.name} (${preset.color})`}
+                    className={`group relative flex flex-col items-center justify-center p-1.5 rounded-lg border transition ${
+                      isActive
+                        ? "border-[#c00000] ring-1 ring-[#c00000]/60 bg-white/5"
+                        : "border-gray-800 hover:border-gray-600 hover:bg-gray-800/40"
+                    }`}
+                  >
+                    <span
+                      className="w-6 h-6 rounded-full shadow-inner border flex items-center justify-center text-[10px]"
+                      style={{
+                        backgroundColor: preset.color,
+                        borderColor: preset.border || "rgba(255,255,255,0.15)",
+                      }}
+                    >
+                      {isActive && (
+                        <span className={preset.isDark ? "text-white font-bold" : "text-gray-900 font-bold"}>
+                          ✓
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-[9px] text-gray-400 group-hover:text-slate-200 mt-1 truncate max-w-[50px] text-center">
+                      {preset.id}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Custom Hex Color Picker */}
+          <div className="pt-2 border-t border-gray-800/80 space-y-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">
+              Custom Hex Color
+            </span>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                aria-label="Custom canvas color"
+                value={currentCanvasColor}
+                onChange={(e) => setCanvasColor(e.target.value)}
+                className="w-8 h-8 rounded border border-gray-700 bg-transparent cursor-pointer shrink-0"
+              />
+              <input
+                type="text"
+                aria-label="Custom canvas hex text"
+                value={currentCanvasColor}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
+                    setCanvasColor(val);
+                  }
+                }}
+                placeholder="#0a0d15"
+                className="flex-1 rounded-md bg-gray-900 border border-gray-700 px-2 py-1.5 text-xs font-mono text-white focus:border-[#c00000] focus:outline-none"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 2. Grid & Alignment Helpers */}
+        <div className="pt-3 border-t border-gray-800 space-y-2">
+          <span className="font-semibold text-gray-300 block">Grid & View Options</span>
+          <div className="space-y-1.5">
+            {/* Snap Grid Toggle */}
+            <button
+              type="button"
+              onClick={toggleSnapToGrid}
+              className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition ${
+                snapToGrid
+                  ? "bg-[#c00000]/15 border-[#c00000]/50 text-[#ffbfbf]"
+                  : "bg-gray-900 border-gray-800 text-gray-300 hover:border-gray-700"
+              }`}
+            >
+              <span className="flex items-center gap-1.5">
+                <span>🧲</span>
+                <span>Snap to 20px Grid</span>
+              </span>
+              <span className="text-[10px] font-bold">{snapToGrid ? "ON" : "OFF"}</span>
+            </button>
+
+            {/* Radar MiniMap Toggle */}
+            <button
+              type="button"
+              onClick={toggleMiniMap}
+              className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition ${
+                showMiniMap
+                  ? "bg-[#c00000]/15 border-[#c00000]/50 text-[#ffbfbf]"
+                  : "bg-gray-900 border-gray-800 text-gray-300 hover:border-gray-700"
+              }`}
+            >
+              <span className="flex items-center gap-1.5">
+                <span>🗺️</span>
+                <span>Radar MiniMap</span>
+              </span>
+              <span className="text-[10px] font-bold">{showMiniMap ? "VISIBLE" : "HIDDEN"}</span>
+            </button>
+
+            {/* Auto Layout (LR / TB) */}
+            <div className="grid grid-cols-2 gap-1.5 pt-1">
+              <button
+                type="button"
+                onClick={() => autoLayout("LR")}
+                className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-900 border border-gray-800 hover:border-gray-700 text-xs text-gray-300 hover:text-white transition"
+                title="Auto-organize from Left to Right"
+              >
+                <span>⚡</span>
+                <span>Layout LR</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => autoLayout("TB")}
+                className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-900 border border-gray-800 hover:border-gray-700 text-xs text-gray-300 hover:text-white transition"
+                title="Auto-organize from Top to Bottom"
+              >
+                <span>⚡</span>
+                <span>Layout TB</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. Diagram Summary Stats */}
+        {diagram && (
+          <div className="pt-3 border-t border-gray-800 space-y-2">
+            <span className="font-semibold text-gray-300 block">Diagram Statistics</span>
+            <div className="grid grid-cols-2 gap-1.5">
+              <div className="p-2 rounded-lg bg-gray-900 border border-gray-800 text-center">
+                <div className="text-base font-bold text-white">{diagram.nodes.length}</div>
+                <div className="text-[10px] text-gray-400">Total Blocks</div>
+              </div>
+              <div className="p-2 rounded-lg bg-gray-900 border border-gray-800 text-center">
+                <div className="text-base font-bold text-white">{diagram.edges.length}</div>
+                <div className="text-[10px] text-gray-400">Connectors</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tip footer */}
+        <div className="pt-2 border-t border-gray-800 text-[11px] text-gray-400 leading-relaxed">
+          <p>Select a block or connector line to customize its properties, colors, animations, and branch labels.</p>
+        </div>
       </aside>
     );
+  }
 
   if (selection.kind === "multi") {
     const selectedNodes = diagram.nodes.filter((n) => selection.nodeIds.includes(n.id));

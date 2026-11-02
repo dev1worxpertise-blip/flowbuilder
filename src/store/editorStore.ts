@@ -27,6 +27,7 @@ export interface HistorySnapshot {
   nodes: FlowNode[];
   edges: FlowEdge[];
   name: string;
+  canvasColor?: string;
 }
 
 interface EditorState {
@@ -48,6 +49,7 @@ interface EditorState {
   removeNode: (id: string) => void;
   removeEdge: (id: string) => void;
   setName: (name: string) => void;
+  setCanvasColor: (color: string) => void;
   setNodes: (nodes: FlowNode[]) => void;
   setEdges: (edges: FlowEdge[]) => void;
   commitSnapshot: () => void;
@@ -120,6 +122,7 @@ function takeSnapshot(s: { diagram: Diagram | null; past: HistorySnapshot[] }): 
     nodes: JSON.parse(JSON.stringify(s.diagram.nodes)),
     edges: JSON.parse(JSON.stringify(s.diagram.edges)),
     name: s.diagram.name,
+    canvasColor: s.diagram.canvasColor,
   };
   const past = [...s.past, current].slice(-MAX_HISTORY);
   return { past, future: [] };
@@ -291,6 +294,17 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   setName: (name) =>
     set((s) => (s.diagram ? { diagram: touch({ ...s.diagram, name }) } : s)),
 
+  setCanvasColor: (color) =>
+    set((s) => {
+      if (!s.diagram) return s;
+      const { past, future } = takeSnapshot(s);
+      return {
+        past,
+        future,
+        diagram: touch({ ...s.diagram, canvasColor: color }),
+      };
+    }),
+
   setNodes: (nodes) =>
     set((s) => (s.diagram ? { diagram: { ...s.diagram, nodes } } : s)),
 
@@ -306,6 +320,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         nodes: s.diagram.nodes,
         edges: s.diagram.edges,
         name: s.diagram.name,
+        canvasColor: s.diagram.canvasColor,
       };
       const newFuture = [current, ...s.future].slice(0, MAX_HISTORY);
       return {
@@ -316,6 +331,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
           nodes: previous.nodes,
           edges: previous.edges,
           name: previous.name,
+          canvasColor: previous.canvasColor ?? s.diagram.canvasColor,
         }),
       };
     }),
@@ -329,6 +345,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         nodes: s.diagram.nodes,
         edges: s.diagram.edges,
         name: s.diagram.name,
+        canvasColor: s.diagram.canvasColor,
       };
       const newPast = [...s.past, current].slice(-MAX_HISTORY);
       return {
@@ -339,6 +356,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
           nodes: next.nodes,
           edges: next.edges,
           name: next.name,
+          canvasColor: next.canvasColor ?? s.diagram.canvasColor,
         }),
       };
     }),

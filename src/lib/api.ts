@@ -147,6 +147,7 @@ export const diagramsApi = {
       updatedAt: new Date(d.updatedAt).getTime(),
       nodes: d.nodes || [],
       edges: d.edges || [],
+      canvasColor: d.canvasColor || (d.theme?.startsWith("#") ? d.theme : undefined) || "#0a0d15",
     };
   },
 
@@ -158,7 +159,7 @@ export const diagramsApi = {
           name: diagram.name,
           nodes: diagram.nodes,
           edges: diagram.edges,
-          theme: diagram.theme,
+          theme: diagram.canvasColor || diagram.theme || "dark",
           thumbnail: diagram.thumbnail,
         }),
       });
@@ -177,7 +178,7 @@ export const diagramsApi = {
             name: diagram.name,
             nodes: diagram.nodes,
             edges: diagram.edges,
-            theme: diagram.theme,
+            theme: diagram.canvasColor || diagram.theme || "dark",
             thumbnail: diagram.thumbnail,
           }),
         });
@@ -205,6 +206,7 @@ export const diagramsApi = {
       updatedAt: new Date(d.updatedAt).getTime(),
       nodes: d.nodes || [],
       edges: d.edges || [],
+      canvasColor: d.canvasColor || (d.theme?.startsWith("#") ? d.theme : undefined) || "#0a0d15",
       user: d.user,
     };
   },

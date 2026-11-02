@@ -165,3 +165,20 @@ test("bulkUpdateNodeData and removeMultipleNodes", () => {
   expect(useEditorStore.getState().diagram!.nodes).toHaveLength(0);
 });
 
+test("setCanvasColor updates diagram canvas color and supports undo/redo", () => {
+  const store = useEditorStore.getState();
+  expect(store.diagram!.canvasColor).toBe("#0a0d15");
+
+  store.setCanvasColor("#000000");
+  expect(useEditorStore.getState().diagram!.canvasColor).toBe("#000000");
+
+  store.setCanvasColor("#f8fafc");
+  expect(useEditorStore.getState().diagram!.canvasColor).toBe("#f8fafc");
+
+  useEditorStore.getState().undo();
+  expect(useEditorStore.getState().diagram!.canvasColor).toBe("#000000");
+
+  useEditorStore.getState().redo();
+  expect(useEditorStore.getState().diagram!.canvasColor).toBe("#f8fafc");
+});
+

@@ -21,7 +21,7 @@ import { SimulationDock } from "../simulation/SimulationDock";
 import { TrafficDock } from "../simulation/TrafficDock";
 import { MultiNodeActionBar } from "./MultiNodeActionBar";
 import type { Sel } from "./Inspector";
-import type { NodeKind } from "../../types";
+import { isLightColor, type NodeKind } from "../../types";
 
 function getMiniMapNodeColor(node: any): string {
   if (node.type === "note") return "#eab308";
@@ -129,6 +129,9 @@ export function Canvas({
     zIndex: n.type === "group" ? -1 : 0,
   }));
 
+  const canvasBg = diagram.canvasColor || "#0a0d15";
+  const isLight = isLightColor(canvasBg);
+
   return (
     <ReactFlow
       nodes={nodesToRender as any}
@@ -136,9 +139,10 @@ export function Canvas({
       nodeTypes={nodeTypes}
       edgeTypes={edgeTypes}
       connectionMode={"loose" as any}
-      colorMode={"dark" as any}
+      colorMode={isLight ? ("light" as any) : ("dark" as any)}
       snapToGrid={snapToGrid}
       snapGrid={[20, 20]}
+      style={{ backgroundColor: canvasBg }}
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       onNodeDragStart={() => {
@@ -166,7 +170,8 @@ export function Canvas({
         <Background
           id="grid-active-lines"
           variant={BackgroundVariant.Lines}
-          color="#25384e"
+          color={isLight ? "rgba(100, 116, 139, 0.4)" : "#25384e"}
+          bgColor={canvasBg}
           gap={20}
           lineWidth={1}
         />
@@ -174,7 +179,8 @@ export function Canvas({
         <Background
           id="grid-inactive-dots"
           variant={BackgroundVariant.Dots}
-          color="#1e293b"
+          color={isLight ? "rgba(100, 116, 139, 0.35)" : "#1e293b"}
+          bgColor={canvasBg}
           gap={20}
           size={1.5}
         />

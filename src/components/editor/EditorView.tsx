@@ -190,7 +190,9 @@ function EditorViewContent({ onBack }: { onBack: () => void }) {
     if (!canvasRef.current || !diagram) return;
     const viewport = canvasRef.current.querySelector<HTMLElement>(".react-flow__viewport");
     if (!viewport) return;
-    const url = await exportImage(viewport, fmt, diagramBounds(diagram.nodes));
+    const url = await exportImage(viewport, fmt, diagramBounds(diagram.nodes), undefined, {
+      backgroundColor: diagram.canvasColor || "#0a0d15",
+    });
     downloadDataUrl(url, `${diagram.name ?? "diagram"}.${fmt}`);
   };
 

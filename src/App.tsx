@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { Diagram } from "./types";
 import { useEditorStore } from "./store/editorStore";
 import { useAuthStore } from "./store/authStore";
+import { useThemeStore } from "./store/themeStore";
 import { Gallery } from "./components/gallery/Gallery";
 import { EditorView } from "./components/editor/EditorView";
 import { AuthModal } from "./components/auth/AuthModal";
@@ -47,8 +48,20 @@ export default function App() {
     setView("gallery");
   };
 
+  const theme = useThemeStore((s) => s.theme);
+
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      if (theme === "dark") {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    }
+  }, [theme]);
+
   return (
-    <div className="h-full w-full overflow-hidden">
+    <div className={`h-full w-full overflow-hidden transition-colors duration-200 ${theme === "dark" ? "dark bg-[#070a12] text-slate-100" : "bg-[#f8fafc] text-slate-900"}`}>
       {view === "share" && shareId ? (
         <ShareView diagramId={shareId} onGoHome={handleGoHome} />
       ) : view === "gallery" ? (

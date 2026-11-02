@@ -15,6 +15,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useEditorStore } from "../../store/editorStore";
+import { useThemeStore } from "../../store/themeStore";
 import { nodeTypes } from "../nodes";
 import { edgeTypes } from "../edges";
 import { SimulationDock } from "../simulation/SimulationDock";
@@ -129,7 +130,11 @@ export function Canvas({
     zIndex: n.type === "group" ? -1 : 0,
   }));
 
-  const canvasBg = diagram.canvasColor || "#0a0d15";
+  const theme = useThemeStore((s) => s.theme);
+  const canvasBg =
+    theme === "light" && (!diagram.canvasColor || diagram.canvasColor === "#0a0d15")
+      ? "#f8fafc"
+      : diagram.canvasColor || (theme === "light" ? "#f8fafc" : "#0a0d15");
   const isLight = isLightColor(canvasBg);
 
   return (
@@ -213,12 +218,14 @@ export function Canvas({
             nodeStrokeColor={getMiniMapNodeStrokeColor}
             nodeStrokeWidth={2}
             nodeBorderRadius={3}
-            bgColor="#090e17"
-            maskColor="rgba(9, 14, 23, 0.78)"
-            maskStrokeColor="#38bdf8"
+            bgColor={isLight ? "#ffffff" : "#090e17"}
+            maskColor={isLight ? "rgba(241, 245, 249, 0.75)" : "rgba(9, 14, 23, 0.78)"}
+            maskStrokeColor="#c00000"
             maskStrokeWidth={1.5}
             ariaLabel="Radar MiniMap"
-            className="!bg-[#090e17]/95 !border !border-gray-800/90 !rounded-xl !shadow-2xl !backdrop-blur-md overflow-hidden !m-3"
+            className={`!rounded-xl !shadow-xl !backdrop-blur-md overflow-hidden !m-3 ${
+              isLight ? "!bg-white/95 !border !border-slate-200" : "!bg-[#090e17]/95 !border !border-gray-800/90"
+            }`}
             style={{ width: 190, height: 125 }}
           />
           <Panel position="bottom-right" className="!m-3 !mb-[135px]">
@@ -226,7 +233,11 @@ export function Canvas({
               aria-label="Hide Radar Map"
               onClick={toggleMiniMap}
               title="Hide Radar Map"
-              className="flex items-center gap-1 rounded-md bg-gray-900/90 border border-gray-700/80 px-2 py-0.5 text-[10px] text-gray-400 hover:text-white hover:border-gray-500 shadow transition backdrop-blur-md"
+              className={`flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] shadow transition backdrop-blur-md ${
+                isLight
+                  ? "bg-white/90 border border-slate-200 text-slate-600 hover:text-slate-900"
+                  : "bg-gray-900/90 border border-gray-700/80 text-gray-400 hover:text-white"
+              }`}
             >
               <span>✕</span>
               <span>Hide Radar</span>
@@ -239,7 +250,11 @@ export function Canvas({
             aria-label="Show Radar MiniMap"
             onClick={toggleMiniMap}
             title="Show Radar MiniMap"
-            className="flex items-center gap-1.5 rounded-full border border-gray-700/80 bg-gray-900/90 px-3 py-1.5 text-xs font-semibold text-gray-300 shadow-xl backdrop-blur-md hover:border-sky-500/70 hover:text-sky-300 transition"
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold shadow-xl backdrop-blur-md transition ${
+              isLight
+                ? "border border-slate-200 bg-white/90 text-slate-700 hover:border-[#c00000]/60 hover:text-[#c00000]"
+                : "border border-gray-700/80 bg-gray-900/90 text-gray-300 hover:border-sky-500/70 hover:text-sky-300"
+            }`}
           >
             <span>🗺️</span>
             <span>Radar</span>

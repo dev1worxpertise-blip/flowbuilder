@@ -1,9 +1,12 @@
 import type { ReactNode } from "react";
 import { type NodeProps } from "@xyflow/react";
 import type { NodeData, NodeKind } from "../../types";
+import { isLightColor } from "../../types";
 import { accentStyle } from "../../lib/theme";
 import { DeleteButton, SideHandles, SimulationBadges, SpotlightHighlight } from "./shared";
 import { HealthBadge } from "./HealthBadge";
+import { useEditorStore } from "../../store/editorStore";
+import { useThemeStore } from "../../store/themeStore";
 
 /**
  * Geometry for each SVG-drawn flowchart shape. Each generator returns SVG
@@ -116,14 +119,43 @@ export function ShapeNode({ id, data, type, selected }: NodeProps & { data: Node
   const geom = SHAPES[type as NodeKind] ?? SHAPES.process!;
   const isDown = data.healthStatus === "down";
   const isWarning = data.healthStatus === "warning";
-  const strokeColor = isDown ? "#ef4444" : isWarning ? "#f59e0b" : s.border;
+  const diagram = useEditorStore((st) => st.diagram);
+  const theme = useThemeStore((st) => st.theme);
+
+  const canvasBg =
+    theme === "light" && (!diagram?.canvasColor || diagram?.canvasColor === "#0a0d15")
+      ? "#f8fafc"
+      : diagram?.canvasColor || (theme === "light" ? "#f8fafc" : "#0a0d15");
+  const isLight = isLightColor(canvasBg);
+
+  const strokeColor = isDown
+    ? "#ef4444"
+    : isWarning
+    ? "#f59e0b"
+    : data.accent === "crimson"
+    ? "#c00000"
+    : s.border;
+
+  const fillColor = isDown
+    ? isLight ? "#fef2f2" : "rgba(30,10,10,0.92)"
+    : isWarning
+    ? isLight ? "#fffbeb" : "rgba(30,24,10,0.92)"
+    : isLight ? "#ffffff" : "rgba(17,24,39,0.9)";
+
   const shadowFilter = isDown
     ? "drop-shadow(0 0 14px rgba(239, 68, 68, 0.9))"
     : isWarning
     ? "drop-shadow(0 0 8px rgba(245, 158, 11, 0.7))"
     : data.glow
-    ? `drop-shadow(0 0 7px ${s.glow})`
+    ? isLight
+      ? `drop-shadow(0 2px 6px rgba(0, 0, 0, 0.08)) drop-shadow(0 0 8px ${s.glow})`
+      : `drop-shadow(0 0 7px ${s.glow})`
+    : isLight
+    ? "drop-shadow(0 1px 2px rgba(0, 0, 0, 0.07))"
     : "none";
+
+  const titleColor = isLight ? "#0f172a" : s.title;
+  const subtitleColor = isLight ? "#64748b" : "#9ca3af";
 
   return (
     <div className={`group relative ${isDown ? "animate-pulse" : ""}`} style={{ width: w, height: h }}>
@@ -140,7 +172,7 @@ export function ShapeNode({ id, data, type, selected }: NodeProps & { data: Node
         style={{ filter: shadowFilter }}
       >
         <g
-          fill={isDown ? "rgba(30,10,10,0.92)" : "rgba(17,24,39,0.9)"}
+          fill={fillColor}
           stroke={strokeColor}
           strokeWidth={selected ? 2.5 : isDown ? 2 : 1.5}
           strokeLinejoin="round"
@@ -149,11 +181,11 @@ export function ShapeNode({ id, data, type, selected }: NodeProps & { data: Node
         </g>
       </svg>
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-3 text-center">
-        <span className="text-xs font-bold leading-tight" style={{ color: s.title }}>{data.title}</span>
-        {data.subtitle ? <span className="text-[10px] leading-tight text-gray-400">{data.subtitle}</span> : null}
+        <span className="text-xs font-bold leading-tight" style={{ color: titleColor }}>{data.title}</span>
+        {data.subtitle ? <span className="text-[10px] leading-tight" style={{ color: subtitleColor }}>{data.subtitle}</span> : null}
       </div>
       <DeleteButton id={id} />
-      <SideHandles color={s.border} />
+      <SideHandles color={strokeColor} />
     </div>
   );
 }

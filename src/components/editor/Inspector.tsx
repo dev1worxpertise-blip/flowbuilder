@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { Icon } from "@iconify/react";
 import { useEditorStore } from "../../store/editorStore";
+import { useThemeStore } from "../../store/themeStore";
 import { ACCENTS, PATH_KINDS, HEALTH_STATUS_CONFIG, CANVAS_COLOR_PRESETS, type NodeHealthStatus } from "../../types";
 import { POPULAR_ICONS } from "../../lib/iconLibrary";
 import { IconPickerModal } from "./IconPickerModal";
@@ -39,6 +40,8 @@ export function Inspector({ selection, onClearSelection }: { selection: Sel; onC
 
   const triggerWebhook = useWebhookStore((s) => s.triggerWebhook);
   const runSyntheticProbe = useWebhookStore((s) => s.runSyntheticProbe);
+  const theme = useThemeStore((s) => s.theme);
+  const isDark = theme === "dark";
 
   const quickIcons = useMemo(() => {
     if (!iconSearch.trim()) {
@@ -57,46 +60,70 @@ export function Inspector({ selection, onClearSelection }: { selection: Sel; onC
     );
 
     return (
-      <aside className="w-72 shrink-0 border-l border-gray-800 p-4 space-y-4 text-xs overflow-y-auto max-h-full select-none">
+      <aside
+        className={`w-72 shrink-0 border-l p-4 space-y-4 text-xs overflow-y-auto max-h-full select-none transition-colors duration-150 ${
+          isDark ? "border-[#232c3d] bg-[#0d111a]/95 text-slate-200" : "border-slate-200 bg-white/95 text-slate-800 shadow-xs"
+        }`}
+      >
         {/* Header */}
-        <div className="border-b border-gray-800 pb-2">
+        <div className={`border-b pb-2 ${isDark ? "border-[#232c3d]" : "border-slate-200"}`}>
           <div className="flex items-center justify-between">
-            <span className="font-bold text-sm text-gray-200">Canvas Settings</span>
-            <span className="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700/60 font-semibold">
+            <span className={`font-bold text-sm ${isDark ? "text-gray-200" : "text-slate-800"}`}>
+              Canvas Settings
+            </span>
+            <span
+              className={`text-[10px] px-1.5 py-0.5 rounded border font-semibold ${
+                isDark
+                  ? "bg-slate-800 text-slate-400 border-slate-700/60"
+                  : "bg-slate-100 text-slate-600 border-slate-200"
+              }`}
+            >
               Board
             </span>
           </div>
-          <p className="text-[11px] text-gray-400 mt-0.5">Customize workspace background and grid layout.</p>
+          <p className={`text-[11px] mt-0.5 ${isDark ? "text-gray-400" : "text-slate-500"}`}>
+            Customize workspace background and grid layout.
+          </p>
         </div>
 
         {/* 1. Canvas Background Color */}
         <div className="space-y-2.5">
           <div className="flex items-center justify-between">
-            <span className="font-semibold text-gray-300">Background Color</span>
-            <span className="font-mono text-[11px] text-sky-400 font-medium">
+            <span className={`font-semibold ${isDark ? "text-gray-300" : "text-slate-700"}`}>
+              Background Color
+            </span>
+            <span className="font-mono text-[11px] text-[#c00000] font-medium">
               {currentCanvasColor}
             </span>
           </div>
 
           {/* Active Color Preview Pill */}
-          <div className="flex items-center gap-2.5 p-2 rounded-lg bg-gray-900 border border-gray-800 shadow-inner">
+          <div
+            className={`flex items-center gap-2.5 p-2 rounded-lg border shadow-inner ${
+              isDark ? "bg-gray-900 border-gray-800" : "bg-slate-50 border-slate-200"
+            }`}
+          >
             <span
-              className="w-8 h-8 rounded-md shadow-md border border-white/20 shrink-0"
+              className="w-8 h-8 rounded-md shadow-md border border-slate-400/40 shrink-0"
               style={{ backgroundColor: currentCanvasColor }}
             />
             <div className="min-w-0 flex-1">
-              <div className="font-semibold text-xs text-white truncate">
+              <div className={`font-semibold text-xs truncate ${isDark ? "text-white" : "text-slate-900"}`}>
                 {currentPreset?.name || "Custom Color"}
               </div>
-              <div className="text-[10px] text-gray-400 font-mono truncate">
+              <div className={`text-[10px] font-mono truncate ${isDark ? "text-gray-400" : "text-slate-500"}`}>
                 {currentCanvasColor}
               </div>
             </div>
             <button
               type="button"
-              onClick={() => setCanvasColor("#0a0d15")}
-              className="text-[10px] text-gray-400 hover:text-white px-1.5 py-0.5 rounded bg-gray-800 border border-gray-700 hover:border-gray-600 transition shrink-0"
-              title="Reset to default background (#0a0d15)"
+              onClick={() => setCanvasColor(isDark ? "#0a0d15" : "#f8fafc")}
+              className={`text-[10px] px-1.5 py-0.5 rounded border transition shrink-0 ${
+                isDark
+                  ? "text-gray-400 hover:text-white bg-gray-800 border-gray-700"
+                  : "text-slate-600 hover:text-slate-900 bg-white border-slate-200 hover:bg-slate-100 shadow-xs"
+              }`}
+              title="Reset to default background"
             >
               ↺ Reset
             </button>
@@ -104,7 +131,9 @@ export function Inspector({ selection, onClearSelection }: { selection: Sel; onC
 
           {/* Presets Grid */}
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-1.5">
+            <span className={`text-[10px] font-bold uppercase tracking-wider block mb-1.5 ${
+              isDark ? "text-gray-500" : "text-slate-400"
+            }`}>
               Theme Palette
             </span>
             <div className="grid grid-cols-4 gap-1.5">
@@ -118,24 +147,28 @@ export function Inspector({ selection, onClearSelection }: { selection: Sel; onC
                     title={`${preset.name} (${preset.color})`}
                     className={`group relative flex flex-col items-center justify-center p-1.5 rounded-lg border transition ${
                       isActive
-                        ? "border-[#c00000] ring-1 ring-[#c00000]/60 bg-white/5"
-                        : "border-gray-800 hover:border-gray-600 hover:bg-gray-800/40"
+                        ? "border-[#c00000] ring-1 ring-[#c00000]/60 bg-[#c00000]/5"
+                        : isDark
+                        ? "border-gray-800 hover:border-gray-600 hover:bg-gray-800/40"
+                        : "border-slate-200 hover:border-slate-400 hover:bg-slate-50"
                     }`}
                   >
                     <span
                       className="w-6 h-6 rounded-full shadow-inner border flex items-center justify-center text-[10px]"
                       style={{
                         backgroundColor: preset.color,
-                        borderColor: preset.border || "rgba(255,255,255,0.15)",
+                        borderColor: preset.border || "rgba(0,0,0,0.15)",
                       }}
                     >
                       {isActive && (
-                        <span className={preset.isDark ? "text-white font-bold" : "text-gray-900 font-bold"}>
+                        <span className={preset.isDark ? "text-white font-bold" : "text-slate-900 font-bold"}>
                           ✓
                         </span>
                       )}
                     </span>
-                    <span className="text-[9px] text-gray-400 group-hover:text-slate-200 mt-1 truncate max-w-[50px] text-center">
+                    <span className={`text-[9px] mt-1 truncate max-w-[50px] text-center ${
+                      isDark ? "text-gray-400 group-hover:text-slate-200" : "text-slate-600 group-hover:text-slate-900"
+                    }`}>
                       {preset.id}
                     </span>
                   </button>
@@ -145,8 +178,10 @@ export function Inspector({ selection, onClearSelection }: { selection: Sel; onC
           </div>
 
           {/* Custom Hex Color Picker */}
-          <div className="pt-2 border-t border-gray-800/80 space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">
+          <div className={`pt-2 border-t space-y-1 ${isDark ? "border-gray-800/80" : "border-slate-200"}`}>
+            <span className={`text-[10px] font-bold uppercase tracking-wider block ${
+              isDark ? "text-gray-500" : "text-slate-400"
+            }`}>
               Custom Hex Color
             </span>
             <div className="flex items-center gap-2">
@@ -155,7 +190,7 @@ export function Inspector({ selection, onClearSelection }: { selection: Sel; onC
                 aria-label="Custom canvas color"
                 value={currentCanvasColor}
                 onChange={(e) => setCanvasColor(e.target.value)}
-                className="w-8 h-8 rounded border border-gray-700 bg-transparent cursor-pointer shrink-0"
+                className="w-8 h-8 rounded border border-slate-300 bg-transparent cursor-pointer shrink-0"
               />
               <input
                 type="text"
@@ -167,16 +202,22 @@ export function Inspector({ selection, onClearSelection }: { selection: Sel; onC
                     setCanvasColor(val);
                   }
                 }}
-                placeholder="#0a0d15"
-                className="flex-1 rounded-md bg-gray-900 border border-gray-700 px-2 py-1.5 text-xs font-mono text-white focus:border-[#c00000] focus:outline-none"
+                placeholder={isDark ? "#0a0d15" : "#f8fafc"}
+                className={`flex-1 rounded-md px-2 py-1.5 text-xs font-mono focus:border-[#c00000] focus:outline-none ${
+                  isDark
+                    ? "bg-gray-900 border border-gray-700 text-white"
+                    : "bg-slate-50 border border-slate-300 text-slate-900"
+                }`}
               />
             </div>
           </div>
         </div>
 
         {/* 2. Grid & Alignment Helpers */}
-        <div className="pt-3 border-t border-gray-800 space-y-2">
-          <span className="font-semibold text-gray-300 block">Grid & View Options</span>
+        <div className={`pt-3 border-t space-y-2 ${isDark ? "border-gray-800" : "border-slate-200"}`}>
+          <span className={`font-semibold block ${isDark ? "text-gray-300" : "text-slate-700"}`}>
+            Grid & View Options
+          </span>
           <div className="space-y-1.5">
             {/* Snap Grid Toggle */}
             <button
@@ -184,8 +225,12 @@ export function Inspector({ selection, onClearSelection }: { selection: Sel; onC
               onClick={toggleSnapToGrid}
               className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition ${
                 snapToGrid
-                  ? "bg-[#c00000]/15 border-[#c00000]/50 text-[#ffbfbf]"
-                  : "bg-gray-900 border-gray-800 text-gray-300 hover:border-gray-700"
+                  ? isDark
+                    ? "bg-[#c00000]/15 border-[#c00000]/50 text-[#ffbfbf]"
+                    : "bg-[#c00000]/10 border-[#c00000]/40 text-[#c00000]"
+                  : isDark
+                  ? "bg-gray-900 border-gray-800 text-gray-300 hover:border-gray-700"
+                  : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
               }`}
             >
               <span className="flex items-center gap-1.5">
@@ -201,8 +246,12 @@ export function Inspector({ selection, onClearSelection }: { selection: Sel; onC
               onClick={toggleMiniMap}
               className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition ${
                 showMiniMap
-                  ? "bg-[#c00000]/15 border-[#c00000]/50 text-[#ffbfbf]"
-                  : "bg-gray-900 border-gray-800 text-gray-300 hover:border-gray-700"
+                  ? isDark
+                    ? "bg-[#c00000]/15 border-[#c00000]/50 text-[#ffbfbf]"
+                    : "bg-[#c00000]/10 border-[#c00000]/40 text-[#c00000]"
+                  : isDark
+                  ? "bg-gray-900 border-gray-800 text-gray-300 hover:border-gray-700"
+                  : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
               }`}
             >
               <span className="flex items-center gap-1.5">
@@ -217,7 +266,11 @@ export function Inspector({ selection, onClearSelection }: { selection: Sel; onC
               <button
                 type="button"
                 onClick={() => autoLayout("LR")}
-                className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-900 border border-gray-800 hover:border-gray-700 text-xs text-gray-300 hover:text-white transition"
+                className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg border text-xs transition ${
+                  isDark
+                    ? "bg-gray-900 border-gray-800 hover:border-gray-700 text-gray-300 hover:text-white"
+                    : "bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700 hover:text-slate-900"
+                }`}
                 title="Auto-organize from Left to Right"
               >
                 <span>⚡</span>
@@ -226,7 +279,11 @@ export function Inspector({ selection, onClearSelection }: { selection: Sel; onC
               <button
                 type="button"
                 onClick={() => autoLayout("TB")}
-                className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-900 border border-gray-800 hover:border-gray-700 text-xs text-gray-300 hover:text-white transition"
+                className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg border text-xs transition ${
+                  isDark
+                    ? "bg-gray-900 border-gray-800 hover:border-gray-700 text-gray-300 hover:text-white"
+                    : "bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-700 hover:text-slate-900"
+                }`}
                 title="Auto-organize from Top to Bottom"
               >
                 <span>⚡</span>
@@ -238,23 +295,37 @@ export function Inspector({ selection, onClearSelection }: { selection: Sel; onC
 
         {/* 3. Diagram Summary Stats */}
         {diagram && (
-          <div className="pt-3 border-t border-gray-800 space-y-2">
-            <span className="font-semibold text-gray-300 block">Diagram Statistics</span>
+          <div className={`pt-3 border-t space-y-2 ${isDark ? "border-gray-800" : "border-slate-200"}`}>
+            <span className={`font-semibold block ${isDark ? "text-gray-300" : "text-slate-700"}`}>
+              Diagram Statistics
+            </span>
             <div className="grid grid-cols-2 gap-1.5">
-              <div className="p-2 rounded-lg bg-gray-900 border border-gray-800 text-center">
-                <div className="text-base font-bold text-white">{diagram.nodes.length}</div>
-                <div className="text-[10px] text-gray-400">Total Blocks</div>
+              <div className={`p-2 rounded-lg border text-center ${
+                isDark ? "bg-gray-900 border-gray-800" : "bg-slate-50 border-slate-200"
+              }`}>
+                <div className={`text-base font-bold ${isDark ? "text-white" : "text-slate-900"}`}>
+                  {diagram.nodes.length}
+                </div>
+                <div className={`text-[10px] ${isDark ? "text-gray-400" : "text-slate-500"}`}>
+                  Total Blocks
+                </div>
               </div>
-              <div className="p-2 rounded-lg bg-gray-900 border border-gray-800 text-center">
-                <div className="text-base font-bold text-white">{diagram.edges.length}</div>
-                <div className="text-[10px] text-gray-400">Connectors</div>
+              <div className={`p-2 rounded-lg border text-center ${
+                isDark ? "bg-gray-900 border-gray-800" : "bg-slate-50 border-slate-200"
+              }`}>
+                <div className={`text-base font-bold ${isDark ? "text-white" : "text-slate-900"}`}>
+                  {diagram.edges.length}
+                </div>
+                <div className={`text-[10px] ${isDark ? "text-gray-400" : "text-slate-500"}`}>
+                  Connectors
+                </div>
               </div>
             </div>
           </div>
         )}
 
         {/* Tip footer */}
-        <div className="pt-2 border-t border-gray-800 text-[11px] text-gray-400 leading-relaxed">
+        <div className={`pt-2 border-t text-[11px] leading-relaxed ${isDark ? "border-gray-800 text-gray-400" : "border-slate-200 text-slate-500"}`}>
           <p>Select a block or connector line to customize its properties, colors, animations, and branch labels.</p>
         </div>
       </aside>

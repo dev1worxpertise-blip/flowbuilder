@@ -325,8 +325,11 @@ export function Inspector({ selection, onClearSelection }: { selection: Sel; onC
         )}
 
         {/* Tip footer */}
-        <div className={`pt-2 border-t text-[11px] leading-relaxed ${isDark ? "border-gray-800 text-gray-400" : "border-slate-200 text-slate-500"}`}>
+        <div className={`pt-2.5 border-t text-[11px] leading-relaxed space-y-1.5 ${isDark ? "border-gray-800 text-gray-400" : "border-slate-200 text-slate-500"}`}>
           <p>Select a block or connector line to customize its properties, colors, animations, and branch labels.</p>
+          <p className="pt-1 text-[10px] text-slate-400 dark:text-gray-500">
+            💡 <strong>Connect:</strong> Drag from any handle dot on a block to another block.
+          </p>
         </div>
       </aside>
     );

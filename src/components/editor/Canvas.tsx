@@ -13,6 +13,7 @@ import {
   type Connection,
   useReactFlow,
   ConnectionMode,
+  ConnectionLineType,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useEditorStore } from "../../store/editorStore";
@@ -145,7 +146,15 @@ export function Canvas({
       nodeTypes={nodeTypes}
       edgeTypes={edgeTypes}
       connectionMode={ConnectionMode.Loose}
-      connectionRadius={32}
+      connectionRadius={40}
+      connectOnClick={true}
+      connectionLineType={ConnectionLineType.SmoothStep}
+      connectionLineStyle={{
+        stroke: isLight ? "#c00000" : "#38bdf8",
+        strokeWidth: 2.5,
+        strokeDasharray: "5 4",
+      }}
+      isValidConnection={(connection) => connection.source !== connection.target}
       colorMode={isLight ? ("light" as any) : ("dark" as any)}
       snapToGrid={snapToGrid}
       snapGrid={[20, 20]}

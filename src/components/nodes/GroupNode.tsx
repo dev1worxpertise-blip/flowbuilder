@@ -178,9 +178,7 @@ export function GroupNode({ id, data, selected }: NodeProps & { data: NodeData }
         <div className="flex-1 pointer-events-none" />
 
         {/* Connection Handles for Linking to the Group */}
-        <div className="pointer-events-auto">
-          <SideHandles color={theme.titleColor} />
-        </div>
+        <SideHandles color={theme.titleColor} />
       </div>
     </>
   );

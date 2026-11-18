@@ -13,3 +13,26 @@ const MAP: Record<Accent, { border: string; glow: string; title: string }> = {
 export function accentStyle(accent: Accent) {
   return MAP[accent] || MAP.neutral;
 }
+
+/**
+ * Resolves the effective canvas background color matching the active theme mode.
+ * Ensures Editor View, Simulation, and Present Mode ALWAYS stay in sync without flips.
+ */
+export function getEffectiveCanvasBg(diagramCanvasColor?: string, isDark: boolean = true): string {
+  if (!isDark) {
+    if (
+      !diagramCanvasColor ||
+      diagramCanvasColor === "#0a0d15" ||
+      diagramCanvasColor === "#000000" ||
+      diagramCanvasColor === "#060913"
+    ) {
+      return "#f8fafc";
+    }
+    return diagramCanvasColor;
+  } else {
+    if (!diagramCanvasColor || diagramCanvasColor === "#f8fafc" || diagramCanvasColor === "#ffffff") {
+      return "#0a0d15";
+    }
+    return diagramCanvasColor;
+  }
+}

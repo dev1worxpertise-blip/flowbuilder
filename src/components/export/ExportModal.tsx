@@ -8,6 +8,8 @@ import {
   downloadDataUrl,
   diagramBounds,
 } from "../../lib/exportDiagram";
+import { useThemeStore } from "../../store/themeStore";
+import { getEffectiveCanvasBg } from "../../lib/theme";
 
 export interface ExportModalProps {
   diagram: Diagram;
@@ -20,11 +22,14 @@ type ExportTab = "poster" | "pdf" | "gif" | "json";
 
 export function ExportModal({ diagram, isOpen, onClose, viewportElement }: ExportModalProps) {
   const [activeTab, setActiveTab] = useState<ExportTab>("poster");
+  const theme = useThemeStore((s) => s.theme);
+  const isDark = theme === "dark";
+  const defaultBg = getEffectiveCanvasBg(diagram.canvasColor, isDark);
 
   // Poster Tab State
   const [posterFormat, setPosterFormat] = useState<"png" | "svg">("png");
   const [posterScale, setPosterScale] = useState<number>(2);
-  const [posterBg, setPosterBg] = useState<string>(diagram.canvasColor || "#0a0e1a");
+  const [posterBg, setPosterBg] = useState<string>(defaultBg);
   const [includeHeader, setIncludeHeader] = useState<boolean>(true);
   const [isExportingPoster, setIsExportingPoster] = useState(false);
 
@@ -38,12 +43,17 @@ export function ExportModal({ diagram, isOpen, onClose, viewportElement }: Expor
   if (!isOpen) return null;
 
   const bounds = diagramBounds(diagram.nodes);
+  const getActiveViewport = () => viewportElement || document.querySelector<HTMLElement>(".react-flow__viewport");
 
   const handleDownloadPoster = async () => {
-    if (!viewportElement) return;
+    const el = getActiveViewport();
+    if (!el) {
+      alert("Unable to locate canvas viewport for export.");
+      return;
+    }
     setIsExportingPoster(true);
     try {
-      const dataUrl = await exportPoster(viewportElement, bounds, diagram, {
+      const dataUrl = await exportPoster(el, bounds, diagram, {
         format: posterFormat,
         scale: posterScale,
         backgroundColor: posterBg,
@@ -52,32 +62,43 @@ export function ExportModal({ diagram, isOpen, onClose, viewportElement }: Expor
       downloadDataUrl(dataUrl, `${diagram.name || "diagram"}_poster_${posterScale}x.${posterFormat}`);
     } catch (err) {
       console.error("Poster export failed:", err);
+      alert("Poster export failed: " + (err instanceof Error ? err.message : String(err)));
     } finally {
       setIsExportingPoster(false);
     }
   };
 
   const handleDownloadPdf = async () => {
-    if (!viewportElement) return;
+    const el = getActiveViewport();
+    if (!el) {
+      alert("Unable to locate canvas viewport for export.");
+      return;
+    }
     setIsExportingPdf(true);
     try {
-      await exportPdf(viewportElement, bounds, diagram, {
+      await exportPdf(el, bounds, diagram, {
         multiPage: isMultiPagePdf,
       });
     } catch (err) {
       console.error("PDF export failed:", err);
+      alert("PDF export failed: " + (err instanceof Error ? err.message : String(err)));
     } finally {
       setIsExportingPdf(false);
     }
   };
 
   const handleDownloadGif = async () => {
-    if (!viewportElement) return;
+    const el = getActiveViewport();
+    if (!el) {
+      alert("Unable to locate canvas viewport for export.");
+      return;
+    }
     setGifProgress(0);
     try {
-      await exportGif(viewportElement, bounds, diagram, (p) => setGifProgress(p));
+      await exportGif(el, bounds, diagram, (p) => setGifProgress(p));
     } catch (err) {
       console.error("GIF export failed:", err);
+      alert("GIF export failed: " + (err instanceof Error ? err.message : String(err)));
     } finally {
       setGifProgress(null);
     }

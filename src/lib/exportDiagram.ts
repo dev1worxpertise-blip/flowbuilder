@@ -79,6 +79,8 @@ export async function exportImage(
     backgroundColor: bg,
     pixelRatio: options?.pixelRatio ?? 2,
     filter: filterFn,
+    skipFonts: true,
+    cacheBust: true,
     width,
     height,
     style: {

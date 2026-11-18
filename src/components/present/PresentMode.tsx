@@ -10,6 +10,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import { useEditorStore } from "../../store/editorStore";
 import { useThemeStore } from "../../store/themeStore";
+import { getEffectiveCanvasBg } from "../../lib/theme";
 import { diagramBounds, type Bounds } from "../../lib/exportDiagram";
 import { buildGuidedTour, type TourStep } from "../../lib/guidedTour";
 import { nodeTypes } from "../nodes";
@@ -101,7 +102,7 @@ function PresentContent({ onExit }: { onExit: () => void }) {
   const theme = useThemeStore((s) => s.theme);
   const toggleTheme = useThemeStore((s) => s.toggleTheme);
   const isDark = theme === "dark";
-  const canvasBg = diagram?.canvasColor || (isDark ? "#0a0d15" : "#f8fafc");
+  const canvasBg = getEffectiveCanvasBg(diagram?.canvasColor, isDark);
 
   const [playing, setPlaying] = useState(true);
   const [speedMultiplier, setSpeedMultiplier] = useState(1);
@@ -286,9 +287,12 @@ function PresentContent({ onExit }: { onExit: () => void }) {
   if (!diagram) return null;
 
   return (
-    <div className={`fixed inset-0 z-50 flex flex-col select-none overflow-hidden transition-colors duration-200 ${
-      isDark ? "bg-[#0a0d15] text-slate-100" : "bg-[#f8fafc] text-slate-900"
-    }`}>
+    <div
+      className={`fixed inset-0 z-50 flex flex-col select-none overflow-hidden transition-colors duration-200 ${
+        isDark ? "text-slate-100" : "text-slate-900"
+      }`}
+      style={{ backgroundColor: canvasBg }}
+    >
       {/* Top Header Bar - Worxpertise Corporate Brand */}
       <div className={`relative z-20 flex items-center justify-between border-b px-4 sm:px-6 py-2.5 backdrop-blur-md transition-colors duration-150 ${
         isDark

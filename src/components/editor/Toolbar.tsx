@@ -126,7 +126,7 @@ export function Toolbar({
 
   return (
     <header
-      className={`flex w-full items-center justify-between gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 select-none shrink-0 border-b backdrop-blur-md transition-colors duration-150 overflow-x-auto no-scrollbar ${
+      className={`flex w-full items-center justify-between gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 select-none shrink-0 border-b backdrop-blur-md transition-colors duration-150 ${
         isDark
           ? "border-[#232c3d] bg-[#0d111a]/95 text-slate-100"
           : "border-slate-200 bg-white/95 text-slate-800 shadow-xs"
@@ -232,11 +232,9 @@ export function Toolbar({
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* 2. CANVAS & LAYOUT TOOLS (SEGMENTED)                          */}
+      {/* 2. CENTER SCROLLABLE WORKSPACE TOOLS                         */}
       {/* ------------------------------------------------------------- */}
-      <div className={`hidden sm:flex items-center gap-1 border-l border-r px-1.5 shrink-0 ${
-        isDark ? "border-[#232c3d]" : "border-slate-200"
-      }`}>
+      <div className="hidden sm:flex min-w-0 flex-1 items-center gap-1 overflow-x-auto no-scrollbar mx-1.5">
         {/* Undo / Redo */}
         <div className={`flex items-center rounded-lg border p-0.5 shadow-xs ${
           isDark ? "border-[#232c3d] bg-[#151b27]" : "border-slate-200 bg-slate-50"
@@ -528,12 +526,9 @@ export function Toolbar({
             </div>
           )}
         </div>
-      </div>
 
-      {/* ------------------------------------------------------------- */}
-      {/* 3. RIGHT ACTIONS GROUP (CONSOLIDATED & NEVER OVERFLOWS)       */}
-      {/* ------------------------------------------------------------- */}
-      <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-auto">
+        <div className={`h-4 w-px mx-0.5 shrink-0 ${isDark ? "bg-[#232c3d]" : "bg-slate-200"}`} />
+
         {/* Quick Search */}
         {onOpenSearch && (
           <button
@@ -686,8 +681,43 @@ export function Toolbar({
           <span className="hidden 2xl:inline">Import</span>
         </button>
 
+        {/* Hidden JSON file input */}
+        <input
+          ref={fileRef}
+          type="file"
+          accept="application/json"
+          className="hidden"
+          onChange={async (e) => {
+            const f = e.target.files?.[0];
+            if (!f) return;
+            loadDiagram(diagramFromJson(await f.text()));
+            e.target.value = "";
+          }}
+        />
+
+        {/* Share Button */}
+        <button
+          className={`rounded-lg border px-2 py-1 text-xs font-semibold transition shadow-xs flex items-center gap-1 shrink-0 ${
+            isDark
+              ? "border-[#858591]/50 bg-[#858591]/15 text-[#c0c0c8] hover:text-white"
+              : "border-slate-200 bg-slate-50 text-slate-700 hover:text-slate-900"
+          }`}
+          onClick={() => setShowShare(true)}
+          title="Generate public shareable link"
+        >
+          <span>🔗</span>
+          <span className="hidden 2xl:inline">Share</span>
+        </button>
+      </div>
+
+      {/* ------------------------------------------------------------- */}
+      {/* 3. RIGHT PINNED ACTIONS (PERMANENTLY PINNED AT ALL ZOOMS)     */}
+      {/* ------------------------------------------------------------- */}
+      <div className={`flex items-center gap-1 sm:gap-1.5 shrink-0 ml-auto pl-1.5 border-l ${
+        isDark ? "border-[#232c3d]" : "border-slate-200"
+      }`}>
         {/* Unified 📸 Export Dropdown Menu */}
-        <div className={`relative border-l pl-1 ${isDark ? "border-[#232c3d]" : "border-slate-200"}`} ref={exportRef}>
+        <div className="relative" ref={exportRef}>
           <button
             className={`rounded-lg border px-2 py-1 text-xs font-semibold transition flex items-center gap-1 shadow-xs shrink-0 ${
               isDark
@@ -698,7 +728,7 @@ export function Toolbar({
             title="Export Diagram as High-Res Poster, PDF Report, GIF, or JSON"
           >
             <span>📸</span>
-            <span className="hidden 2xl:inline">Export</span>
+            <span className="hidden sm:inline">Export</span>
             <span className="text-[9px] text-slate-400">▾</span>
           </button>
 
@@ -833,34 +863,6 @@ export function Toolbar({
             </div>
           )}
         </div>
-
-        {/* Hidden JSON file input */}
-        <input
-          ref={fileRef}
-          type="file"
-          accept="application/json"
-          className="hidden"
-          onChange={async (e) => {
-            const f = e.target.files?.[0];
-            if (!f) return;
-            loadDiagram(diagramFromJson(await f.text()));
-            e.target.value = "";
-          }}
-        />
-
-        {/* Share Button */}
-        <button
-          className={`rounded-lg border px-2 py-1 text-xs font-semibold transition shadow-xs flex items-center gap-1 shrink-0 ${
-            isDark
-              ? "border-[#858591]/50 bg-[#858591]/15 text-[#c0c0c8] hover:text-white"
-              : "border-slate-200 bg-slate-50 text-slate-700 hover:text-slate-900"
-          }`}
-          onClick={() => setShowShare(true)}
-          title="Generate public shareable link"
-        >
-          <span>🔗</span>
-          <span className="hidden 2xl:inline">Share</span>
-        </button>
 
         {/* Toggle Right Properties Panel */}
         <button

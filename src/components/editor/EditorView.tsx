@@ -21,6 +21,7 @@ import { ExportModal } from "../export/ExportModal";
 import { NocModal } from "../noc/NocModal";
 import { useWebhookStore } from "../../store/webhookStore";
 import { useThemeStore } from "../../store/themeStore";
+import { getEffectiveCanvasBg } from "../../lib/theme";
 
 export function EditorView({ onBack, initialPresent = false }: { onBack: () => void; initialPresent?: boolean }) {
   return (
@@ -244,27 +245,43 @@ function EditorViewContent({ onBack, initialPresent = false }: { onBack: () => v
   }, [selection, undo, redo, copyNode, pasteNode, duplicateNode, removeNode, removeEdge, removeMultipleNodes]);
 
   const onExportImage = async (fmt: "png" | "svg") => {
-    if (!canvasRef.current || !diagram) return;
-    const viewport = canvasRef.current.querySelector<HTMLElement>(".react-flow__viewport");
+    if (!diagram) return;
+    const viewport = canvasRef.current?.querySelector<HTMLElement>(".react-flow__viewport") || document.querySelector<HTMLElement>(".react-flow__viewport");
     if (!viewport) return;
-    const url = await exportImage(viewport, fmt, diagramBounds(diagram.nodes), undefined, {
-      backgroundColor: diagram.canvasColor || "#0a0d15",
-    });
-    downloadDataUrl(url, `${diagram.name ?? "diagram"}.${fmt}`);
+    try {
+      const exportBg = getEffectiveCanvasBg(diagram.canvasColor, isDark);
+      const url = await exportImage(viewport, fmt, diagramBounds(diagram.nodes), undefined, {
+        backgroundColor: exportBg,
+      });
+      downloadDataUrl(url, `${diagram.name ?? "diagram"}.${fmt}`);
+    } catch (err) {
+      console.error("Export image failed:", err);
+      alert("Failed to export diagram image. " + (err instanceof Error ? err.message : String(err)));
+    }
   };
 
   const onExportPdf = async () => {
-    if (!canvasRef.current || !diagram) return;
-    const viewport = canvasRef.current.querySelector<HTMLElement>(".react-flow__viewport");
+    if (!diagram) return;
+    const viewport = canvasRef.current?.querySelector<HTMLElement>(".react-flow__viewport") || document.querySelector<HTMLElement>(".react-flow__viewport");
     if (!viewport) return;
-    await exportPdf(viewport, diagramBounds(diagram.nodes), diagram);
+    try {
+      await exportPdf(viewport, diagramBounds(diagram.nodes), diagram);
+    } catch (err) {
+      console.error("Export PDF failed:", err);
+      alert("Failed to export PDF report. " + (err instanceof Error ? err.message : String(err)));
+    }
   };
 
   const onExportGif = async (onProgress?: (p: number) => void) => {
-    if (!canvasRef.current || !diagram) return;
-    const viewport = canvasRef.current.querySelector<HTMLElement>(".react-flow__viewport");
+    if (!diagram) return;
+    const viewport = canvasRef.current?.querySelector<HTMLElement>(".react-flow__viewport") || document.querySelector<HTMLElement>(".react-flow__viewport");
     if (!viewport) return;
-    await exportGif(viewport, diagramBounds(diagram.nodes), diagram, onProgress);
+    try {
+      await exportGif(viewport, diagramBounds(diagram.nodes), diagram, onProgress);
+    } catch (err) {
+      console.error("Export GIF failed:", err);
+      alert("Failed to export GIF animation. " + (err instanceof Error ? err.message : String(err)));
+    }
   };
 
   if (present) return <PresentMode onExit={() => setPresent(false)} />;
@@ -342,7 +359,7 @@ function EditorViewContent({ onBack, initialPresent = false }: { onBack: () => v
           diagram={diagram}
           isOpen={isExportOpen}
           onClose={() => setIsExportOpen(false)}
-          viewportElement={canvasRef.current?.querySelector<HTMLElement>(".react-flow__viewport") ?? null}
+          viewportElement={canvasRef.current?.querySelector<HTMLElement>(".react-flow__viewport") || (typeof document !== "undefined" ? document.querySelector<HTMLElement>(".react-flow__viewport") : null)}
         />
       )}
     </div>

@@ -25,6 +25,7 @@ import { TrafficDock } from "../simulation/TrafficDock";
 import { MultiNodeActionBar } from "./MultiNodeActionBar";
 import type { Sel } from "./Inspector";
 import { isLightColor, type NodeKind } from "../../types";
+import { getEffectiveCanvasBg } from "../../lib/theme";
 
 function getMiniMapNodeColor(node: any): string {
   if (node.type === "note") return "#eab308";
@@ -133,10 +134,8 @@ export function Canvas({
   }));
 
   const theme = useThemeStore((s) => s.theme);
-  const canvasBg =
-    theme === "light" && (!diagram.canvasColor || diagram.canvasColor === "#0a0d15")
-      ? "#f8fafc"
-      : diagram.canvasColor || (theme === "light" ? "#f8fafc" : "#0a0d15");
+  const isDark = theme === "dark";
+  const canvasBg = getEffectiveCanvasBg(diagram.canvasColor, isDark);
   const isLight = isLightColor(canvasBg);
 
   return (

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useReactFlow } from "@xyflow/react";
 import { useSimulationStore } from "../../store/simulationStore";
 import { useEditorStore } from "../../store/editorStore";
@@ -80,38 +81,53 @@ export function SimulationDock() {
   const visitedCount = visitedNodeIds.length;
 
   return (
-    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-3 w-auto max-w-xl animate-in slide-in-from-bottom duration-300">
-      {/* Branch Choice Selection Banner (when paused at a decision node) */}
-      {branchChoice && (
-        <div className="flex flex-col items-center gap-2.5 rounded-2xl border border-amber-500/50 bg-[#0f172a]/95 px-5 py-3.5 shadow-2xl backdrop-blur-md text-center">
-          <div className="text-xs text-amber-300 font-semibold flex items-center gap-1.5">
-            <span>🔀</span> Decision Point: <strong className="text-white">{branchChoice.sourceTitle}</strong>
-          </div>
-          <div className="text-[11px] text-gray-300">
-            Multiple outgoing paths found. Which branch would you like to follow?
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-1">
-            {branchChoice.branches.map((b) => (
-              <button
-                key={b.edgeId}
-                onClick={() => chooseBranch(b.edgeId, b.targetId, diagram.nodes)}
-                className="flex items-center gap-1.5 rounded-xl border border-sky-500/40 bg-sky-950/60 px-3.5 py-1.5 text-xs font-semibold text-sky-200 hover:bg-sky-900/80 hover:border-sky-400 transition shadow"
-              >
-                <span
-                  className="h-2 w-2 rounded-full"
-                  style={{ background: b.color || "#38bdf8" }}
-                />
-                <span>{b.label}</span>
-                {b.targetTitle && (
-                  <span className="text-[10px] text-gray-400">→ {b.targetTitle}</span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+    <>
+      {/* Branch Choice Selection Dialog (when paused at a decision node) */}
+      {branchChoice &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-auto bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+            <div className="relative w-full max-w-lg rounded-2xl border-2 border-amber-500 bg-[#0d121f]/98 p-6 shadow-2xl backdrop-blur-xl ring-4 ring-amber-500/20 text-center animate-in zoom-in-95 duration-200">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-bold mb-2">
+                <span>🔀</span>
+                <span>Decision Point</span>
+              </div>
 
-      {/* Main Player Dock */}
+              <h3 className="text-lg font-black text-white mb-1 tracking-tight">
+                {branchChoice.sourceTitle}
+              </h3>
+
+              <p className="text-xs text-gray-300 mb-5">
+                Multiple outgoing paths found. Please select a branch to continue:
+              </p>
+
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                {branchChoice.branches.map((b) => (
+                  <button
+                    key={b.edgeId}
+                    onClick={() => chooseBranch(b.edgeId, b.targetId, diagram.nodes)}
+                    className="group flex items-center gap-2.5 rounded-xl border-2 border-sky-400/60 bg-sky-950/90 hover:bg-sky-600 hover:border-sky-300 hover:text-white px-5 py-3 text-sm font-bold text-sky-200 transition-all shadow-xl hover:scale-105 active:scale-95 cursor-pointer"
+                  >
+                    <span
+                      className="h-3 w-3 rounded-full shrink-0 group-hover:scale-125 transition-transform"
+                      style={{ background: b.color || "#38bdf8" }}
+                    />
+                    <span className="text-base tracking-wide font-black">{b.label}</span>
+                    {b.targetTitle && (
+                      <span className="text-xs text-sky-300/80 group-hover:text-white/90 font-normal">
+                        → {b.targetTitle}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-3 w-auto max-w-xl animate-in slide-in-from-bottom duration-300">
+        {/* Main Player Dock */}
       <div className="flex items-center gap-3 rounded-full border border-gray-700/80 bg-[#0b0f19]/95 px-5 py-2.5 shadow-2xl backdrop-blur-md text-gray-100">
         {/* Status Badge & Current Step */}
         <div className="flex items-center gap-2 border-r border-gray-800 pr-3">
@@ -218,5 +234,6 @@ export function SimulationDock() {
         </div>
       </div>
     </div>
-  );
+  </>
+);
 }

@@ -9,20 +9,25 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useEditorStore } from "../../store/editorStore";
+import { useThemeStore } from "../../store/themeStore";
 import { diagramBounds, type Bounds } from "../../lib/exportDiagram";
 import { buildGuidedTour, type TourStep } from "../../lib/guidedTour";
 import { nodeTypes } from "../nodes";
 import { edgeTypes } from "../edges";
 import { SimulationDock } from "../simulation/SimulationDock";
+import { useSimulationStore } from "../../store/simulationStore";
 import { HEALTH_STATUS_CONFIG, type NodeHealthStatus } from "../../types";
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
 /** Zoom in / out / fit buttons */
-function ZoomControls() {
+function ZoomControls({ isDark }: { isDark: boolean }) {
   const { zoomIn, zoomOut, fitView } = useReactFlow();
-  const cls =
-    "flex h-8 w-8 items-center justify-center rounded-lg border border-gray-700 bg-gray-900/80 text-base leading-none text-gray-200 backdrop-blur hover:border-gray-500 hover:text-white transition";
+  const cls = `flex h-8 w-8 items-center justify-center rounded-lg border text-base leading-none transition shadow-sm ${
+    isDark
+      ? "border-slate-800 bg-[#0d111a]/90 text-slate-200 hover:border-slate-600 hover:text-white"
+      : "border-slate-200 bg-white/95 text-slate-700 hover:border-[#c00000] hover:text-[#c00000] shadow-md"
+  }`;
   return (
     <div className="absolute left-4 bottom-20 z-20 flex flex-col gap-1.5 shadow-lg">
       <button className={cls} title="Zoom in" aria-label="Zoom in" onClick={() => zoomIn({ duration: 150 })}>+</button>
@@ -93,6 +98,11 @@ function PresentContent({ onExit }: { onExit: () => void }) {
   const diagram = useEditorStore((s) => s.diagram);
   const { fitView } = useReactFlow();
 
+  const theme = useThemeStore((s) => s.theme);
+  const toggleTheme = useThemeStore((s) => s.toggleTheme);
+  const isDark = theme === "dark";
+  const canvasBg = diagram?.canvasColor || (isDark ? "#0a0d15" : "#f8fafc");
+
   const [playing, setPlaying] = useState(true);
   const [speedMultiplier, setSpeedMultiplier] = useState(1);
   const [restartKey, setRestartKey] = useState(0);
@@ -103,6 +113,10 @@ function PresentContent({ onExit }: { onExit: () => void }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
 
+  const isSimulating = useSimulationStore((s) => s.isActive);
+  const startSimulation = useSimulationStore((s) => s.startSimulation);
+  const stopSimulation = useSimulationStore((s) => s.stopSimulation);
+
   // Generate guided sequence
   const steps: TourStep[] = useMemo(() => {
     if (!diagram) return [];
@@ -111,19 +125,19 @@ function PresentContent({ onExit }: { onExit: () => void }) {
 
   const currentStep = steps[stepIndex];
 
-  // Camera framing on step without aggressive zooming
-  const isInitialMount = useRef(true);
+  // Camera framing on step with clear, readable focus
   const frameCurrentStep = useCallback((step: TourStep) => {
     if (!step || !diagram) return;
     // For small diagrams (<= 4 nodes), keep full overview framed so user sees whole context
     if (diagram.nodes.length <= 4) {
       fitView({ padding: 0.22, maxZoom: 1.0, duration: 350 });
     } else {
-      // For larger diagrams, frame the node with generous padding
+      // For larger diagrams, frame the node with clean comfortable readability
       fitView({
         nodes: [{ id: step.node.id }],
-        padding: 2.2,
-        maxZoom: 1.0,
+        padding: 0.65,
+        maxZoom: 1.05,
+        minZoom: 0.6,
         duration: 400,
       });
     }
@@ -131,15 +145,20 @@ function PresentContent({ onExit }: { onExit: () => void }) {
 
   // Handle step index navigation
   useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      // On initial mount, let ReactFlow fitView frame the full diagram cleanly
-      return;
-    }
     if (tourActive && currentStep) {
       frameCurrentStep(currentStep);
     }
   }, [stepIndex, tourActive, currentStep, frameCurrentStep]);
+
+  // Auto-frame initial step on load
+  useEffect(() => {
+    if (tourActive && currentStep) {
+      const timer = setTimeout(() => {
+        frameCurrentStep(currentStep);
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   // Auto-play timer
   const autoPlayTimerRef = useRef<any>(null);
@@ -267,67 +286,126 @@ function PresentContent({ onExit }: { onExit: () => void }) {
   if (!diagram) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#0a0e1a] flex flex-col select-none overflow-hidden">
-      {/* Top Header Bar */}
-      <div className="relative z-20 flex items-center justify-between border-b border-gray-800/80 bg-[#0d121f]/95 px-6 py-2.5 backdrop-blur-md">
+    <div className={`fixed inset-0 z-50 flex flex-col select-none overflow-hidden transition-colors duration-200 ${
+      isDark ? "bg-[#0a0d15] text-slate-100" : "bg-[#f8fafc] text-slate-900"
+    }`}>
+      {/* Top Header Bar - Worxpertise Corporate Brand */}
+      <div className={`relative z-20 flex items-center justify-between border-b px-4 sm:px-6 py-2.5 backdrop-blur-md transition-colors duration-150 ${
+        isDark
+          ? "border-[#232c3d] bg-[#0d111a]/95 text-slate-100 shadow-sm"
+          : "border-slate-200 bg-white/95 text-slate-800 shadow-xs"
+      }`}>
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10 border border-sky-500/30 text-sky-400 font-bold">
-            ▶
+          {/* Worxpertise Logo Badge */}
+          <div className="bg-white p-1 px-1.5 rounded-xl border border-slate-200 shadow-xs flex items-center shrink-0">
+            <img
+              src="https://worxpertise.com/wp-content/themes/worxpertise/assets/images/worx-header-logo.png"
+              alt="Worxpertise Logo"
+              className="h-4 sm:h-5 w-auto object-contain"
+              onError={(e) => {
+                const parent = (e.target as HTMLElement).parentElement;
+                if (parent) {
+                  parent.innerHTML = '<span class="text-xs font-black text-[#c00000]">Worx</span>';
+                }
+              }}
+            />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-base font-bold text-sky-400 leading-tight">{diagram.name}</h1>
-              <span className="rounded-full bg-sky-950/80 border border-sky-700/50 px-2 py-0.5 text-[10px] font-semibold text-sky-300">
+              <h1 className={`text-sm sm:text-base font-extrabold leading-tight ${isDark ? "text-white" : "text-slate-900"}`}>
+                {diagram.name}
+              </h1>
+              <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold border shrink-0 ${
+                isDark
+                  ? "bg-[#c00000]/15 border-[#c00000]/40 text-[#ff4040]"
+                  : "bg-rose-50 border-rose-200/80 text-[#c00000]"
+              }`}>
                 Presentation Mode
               </span>
             </div>
-            <p className="text-[11px] text-gray-400">Interactive Architecture Walkthrough & Live Simulation</p>
+            <p className={`text-[10px] sm:text-[11px] truncate max-w-sm sm:max-w-md ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+              Worxpertise Flow Studio — Interactive Architecture Walkthrough & Live Simulation
+            </p>
           </div>
         </div>
 
         {/* Central Mode Switcher */}
-        <div className="flex items-center gap-1 rounded-xl border border-gray-800 bg-gray-900/60 p-1">
+        <div className={`flex items-center gap-1 rounded-xl border p-1 transition ${
+          isDark ? "border-[#232c3d] bg-[#111827]/80" : "border-slate-200 bg-slate-100/90 shadow-inner"
+        }`}>
           <button
             onClick={() => {
+              if (isSimulating) stopSimulation();
               setTourActive(true);
               if (currentStep) frameCurrentStep(currentStep);
             }}
-            className={`rounded-lg px-3 py-1 text-xs font-semibold transition ${
-              tourActive
-                ? "bg-sky-600 text-white shadow-sm"
-                : "text-gray-400 hover:text-gray-200"
+            className={`rounded-lg px-3 py-1 text-xs font-bold transition flex items-center gap-1 ${
+              tourActive && !isSimulating
+                ? "bg-[#c00000] text-white shadow-sm"
+                : isDark
+                ? "text-slate-400 hover:text-white"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            🎯 Guided Tour
+            <span>🎯</span>
+            <span>Guided Tour</span>
           </button>
           <button
             onClick={() => {
+              if (isSimulating) {
+                stopSimulation();
+              } else {
+                setTourActive(false);
+                startSimulation(diagram.nodes, diagram.edges);
+              }
+            }}
+            className={`rounded-lg px-3 py-1 text-xs font-bold transition flex items-center gap-1 ${
+              isSimulating
+                ? "bg-[#c00000] text-white shadow-sm"
+                : isDark
+                ? "text-slate-400 hover:text-white"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <span>{isSimulating ? "⏹" : "▶"}</span>
+            <span>Simulate</span>
+          </button>
+          <button
+            onClick={() => {
+              if (isSimulating) stopSimulation();
               setTourActive(false);
               fitView({ padding: 0.22, maxZoom: 1.0, duration: 350 });
             }}
-            className={`rounded-lg px-3 py-1 text-xs font-semibold transition ${
-              !tourActive
-                ? "bg-sky-600 text-white shadow-sm"
-                : "text-gray-400 hover:text-gray-200"
+            className={`rounded-lg px-3 py-1 text-xs font-bold transition flex items-center gap-1 ${
+              !tourActive && !isSimulating
+                ? "bg-[#c00000] text-white shadow-sm"
+                : isDark
+                ? "text-slate-400 hover:text-white"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            🗺️ Free Explore
+            <span>🗺️</span>
+            <span>Free Explore</span>
           </button>
         </div>
 
         {/* Right Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {/* Flow Speed Toggles */}
-          <div className="flex items-center rounded-lg border border-gray-700 bg-gray-900 px-1 py-0.5 text-xs text-gray-400">
-            <span className="text-[10px] px-1.5 text-gray-400 font-semibold">Flow:</span>
+          <div className={`flex items-center rounded-lg border px-1 py-0.5 text-xs ${
+            isDark ? "border-[#232c3d] bg-[#151b27] text-slate-400" : "border-slate-200 bg-white text-slate-700 shadow-xs"
+          }`}>
+            <span className="text-[10px] px-1 font-semibold text-slate-400">Flow:</span>
             {[1, 2, 3].map((spd) => (
               <button
                 key={spd}
                 onClick={() => setSpeedMultiplier(spd)}
                 className={`rounded px-1.5 py-0.5 text-[11px] font-bold transition ${
                   speedMultiplier === spd
-                    ? "bg-sky-600 text-white"
-                    : "hover:text-gray-200"
+                    ? "bg-[#c00000] text-white"
+                    : isDark
+                    ? "hover:text-white"
+                    : "hover:text-slate-900"
                 }`}
               >
                 {spd}x
@@ -336,36 +414,70 @@ function PresentContent({ onExit }: { onExit: () => void }) {
           </div>
 
           <button
-            className="rounded-md border border-gray-700 bg-gray-900 px-3 py-1.5 text-xs font-semibold text-gray-200 hover:border-gray-500 transition"
+            className={`rounded-lg border px-2.5 sm:px-3 py-1.5 text-xs font-semibold transition ${
+              isDark
+                ? "border-[#232c3d] bg-[#151b27] text-slate-200 hover:border-slate-500"
+                : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 shadow-xs"
+            }`}
             onClick={() => setPlaying((p) => !p)}
           >
             {playing ? "⏸ Pause Flows" : "▶ Resume Flows"}
           </button>
 
           <button
-            className="rounded-md border border-gray-700 bg-gray-900 px-3 py-1.5 text-xs font-semibold text-gray-200 hover:border-gray-500 transition"
+            className={`rounded-lg border px-2.5 sm:px-3 py-1.5 text-xs font-semibold transition ${
+              isDark
+                ? "border-[#232c3d] bg-[#151b27] text-slate-200 hover:border-slate-500"
+                : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 shadow-xs"
+            }`}
             onClick={() => {
               setRestartKey((k) => k + 1);
               setPlaying(true);
               setStepIndex(0);
-              fitView({ padding: 0.22, maxZoom: 1.0, duration: 350 });
+              if (currentStep) frameCurrentStep(currentStep);
             }}
+            title="Restart Walkthrough"
           >
             ↺ Reset
           </button>
 
+          {/* Theme Toggle (Worxpertise Light vs Dark) */}
           <button
-            className="rounded-md border border-gray-700 bg-gray-900 px-3 py-1.5 text-xs font-semibold text-gray-200 hover:border-gray-500 transition flex items-center gap-1"
+            onClick={toggleTheme}
+            className={`rounded-lg px-2 sm:px-2.5 py-1.5 text-xs font-semibold border transition flex items-center gap-1 ${
+              isDark
+                ? "border-[#232c3d] bg-[#151b27] text-amber-300 hover:border-amber-400"
+                : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 shadow-xs"
+            }`}
+            title={isDark ? "Switch to Worxpertise Light Theme" : "Switch to Midnight Dark Theme"}
+          >
+            <span>{isDark ? "☀️" : "🌙"}</span>
+          </button>
+
+          <button
+            className={`rounded-lg border px-2.5 sm:px-3 py-1.5 text-xs font-semibold transition flex items-center gap-1 ${
+              isDark
+                ? "border-[#232c3d] bg-[#151b27] text-slate-200 hover:border-slate-500"
+                : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 shadow-xs"
+            }`}
             onClick={toggleFullscreen}
             title="Toggle Fullscreen (F)"
           >
             <span>{isFullscreen ? "🗗" : "⛶"}</span>
-            <span>{isFullscreen ? "Windowed" : "Fullscreen"}</span>
+            <span className="hidden md:inline">{isFullscreen ? "Windowed" : "Fullscreen"}</span>
           </button>
 
           <button
-            className="rounded-md bg-red-950/80 border border-red-700/60 px-3.5 py-1.5 text-xs font-bold text-red-300 hover:bg-red-900/60 transition"
-            onClick={onExit}
+            className={`rounded-lg px-3.5 py-1.5 text-xs font-bold border transition shadow-xs ${
+              isDark
+                ? "bg-rose-950/40 border-rose-900/60 text-rose-300 hover:bg-[#c00000] hover:text-white"
+                : "bg-rose-50 border-rose-200 text-[#c00000] hover:bg-[#c00000] hover:text-white"
+            }`}
+            onClick={() => {
+              if (isSimulating) stopSimulation();
+              onExit();
+            }}
+            title="Exit Presentation Mode (Esc)"
           >
             Exit
           </button>
@@ -397,29 +509,37 @@ function PresentContent({ onExit }: { onExit: () => void }) {
           fitView
           fitViewOptions={{ padding: 0.22, maxZoom: 1.0 }}
           proOptions={{ hideAttribution: true }}
-          style={{ backgroundColor: diagram.canvasColor || "#0a0d15" }}
+          style={{ backgroundColor: canvasBg }}
         >
           <Background
-            color={diagram.canvasColor ? "rgba(100, 116, 139, 0.3)" : "#111827"}
-            bgColor={diagram.canvasColor || "#0a0d15"}
+            color={isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(100, 116, 139, 0.25)"}
+            bgColor={canvasBg}
             gap={24}
           />
-          <ZoomControls />
+          <ZoomControls isDark={isDark} />
           <VerticalScrollbar bounds={bounds} />
           <SimulationDock />
         </ReactFlow>
 
-        {/* Compact Floating Presentation Remote (HUD) */}
-        {tourActive && currentStep && (
+        {/* Compact Floating Presentation Remote (HUD) - Worxpertise Styled */}
+        {tourActive && currentStep && !isSimulating && (
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 w-full max-w-xl px-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
             {isMinimized ? (
               /* Minimized Floating Pill */
-              <div className="flex items-center justify-between rounded-full border border-sky-500/50 bg-[#0d1322]/95 px-4 py-2 shadow-2xl backdrop-blur-xl ring-1 ring-sky-500/30">
+              <div className={`flex items-center justify-between rounded-full border px-4 py-2 shadow-2xl backdrop-blur-xl ring-1 ${
+                isDark
+                  ? "border-[#232c3d] bg-[#0d111a]/95 text-slate-200 ring-[#c00000]/20"
+                  : "border-slate-200 bg-white/95 text-slate-800 ring-slate-900/5 shadow-slate-300/40"
+              }`}>
                 <div className="flex items-center gap-2">
-                  <span className="rounded-md bg-sky-500/20 border border-sky-500/40 px-2 py-0.5 text-[10px] font-bold tracking-wider text-sky-300">
+                  <span className={`rounded-md px-2 py-0.5 text-[10px] font-bold tracking-wider border ${
+                    isDark
+                      ? "bg-[#c00000]/15 border-[#c00000]/40 text-[#ff4040]"
+                      : "bg-rose-50 border-rose-200 text-[#c00000]"
+                  }`}>
                     STEP {stepIndex + 1} OF {steps.length}
                   </span>
-                  <span className="text-xs font-bold text-white truncate max-w-[180px]">
+                  <span className={`text-xs font-bold truncate max-w-[180px] ${isDark ? "text-white" : "text-slate-900"}`}>
                     {String((currentStep.node.data as any)?.title || (currentStep.node.data as any)?.label || currentStep.node.id)}
                   </span>
                 </div>
@@ -429,7 +549,7 @@ function PresentContent({ onExit }: { onExit: () => void }) {
                       setStepIndex((cur) => (cur - 1 + steps.length) % steps.length);
                       setAutoProgress(0);
                     }}
-                    className="p-1 text-gray-300 hover:text-white"
+                    className={`p-1 transition ${isDark ? "text-slate-300 hover:text-white" : "text-slate-600 hover:text-slate-900"}`}
                     title="Previous Step"
                   >
                     ◀
@@ -439,14 +559,14 @@ function PresentContent({ onExit }: { onExit: () => void }) {
                       setStepIndex((cur) => (cur + 1) % steps.length);
                       setAutoProgress(0);
                     }}
-                    className="p-1 text-gray-300 hover:text-white"
+                    className={`p-1 transition ${isDark ? "text-slate-300 hover:text-white" : "text-slate-600 hover:text-slate-900"}`}
                     title="Next Step"
                   >
                     ▶
                   </button>
                   <button
                     onClick={() => setIsMinimized(false)}
-                    className="ml-2 text-xs text-sky-400 hover:text-sky-300 font-bold"
+                    className="ml-2 text-xs text-[#c00000] hover:text-[#a00000] font-bold"
                     title="Expand Remote"
                   >
                     ▴
@@ -455,12 +575,16 @@ function PresentContent({ onExit }: { onExit: () => void }) {
               </div>
             ) : (
               /* Full Slim Presentation Remote */
-              <div className="relative rounded-2xl border border-sky-500/40 bg-[#0d1322]/95 p-3.5 shadow-2xl backdrop-blur-xl ring-1 ring-sky-500/20">
+              <div className={`relative rounded-2xl border p-4 shadow-2xl backdrop-blur-xl ring-1 ${
+                isDark
+                  ? "border-[#232c3d] bg-[#0d111a]/95 text-slate-100 ring-[#c00000]/20"
+                  : "border-slate-200/90 bg-white/95 text-slate-900 ring-slate-900/5 shadow-slate-300/40"
+              }`}>
                 {/* Auto-play progress bar */}
                 {isAutoPlaying && (
-                  <div className="absolute top-0 left-0 right-0 h-1 overflow-hidden rounded-t-2xl bg-gray-800">
+                  <div className="absolute top-0 left-0 right-0 h-1 overflow-hidden rounded-t-2xl bg-slate-200 dark:bg-slate-800">
                     <div
-                      className="h-full bg-gradient-to-r from-sky-500 to-emerald-400 transition-all duration-75 ease-linear"
+                      className="h-full bg-gradient-to-r from-[#c00000] via-[#ff4040] to-emerald-500 transition-all duration-75 ease-linear"
                       style={{ width: `${autoProgress}%` }}
                     />
                   </div>
@@ -470,10 +594,18 @@ function PresentContent({ onExit }: { onExit: () => void }) {
                   {/* Left: Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <span className="rounded-md bg-sky-500/20 border border-sky-500/40 px-2 py-0.5 text-[10px] font-bold tracking-wider text-sky-300">
+                      <span className={`rounded-md px-2 py-0.5 text-[10px] font-bold tracking-wider border ${
+                        isDark
+                          ? "bg-[#c00000]/15 border-[#c00000]/40 text-[#ff4040]"
+                          : "bg-rose-50 border-rose-200 text-[#c00000]"
+                      }`}>
                         STEP {stepIndex + 1} OF {steps.length}
                       </span>
-                      <span className="rounded-md bg-gray-800 px-1.5 py-0.5 text-[10px] font-semibold text-gray-300 uppercase">
+                      <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase border ${
+                        isDark
+                          ? "bg-slate-800 border-slate-700 text-slate-300"
+                          : "bg-slate-100 border-slate-200 text-slate-600"
+                      }`}>
                         {currentStep.node.type || "Component"}
                       </span>
                       {(() => {
@@ -493,7 +625,7 @@ function PresentContent({ onExit }: { onExit: () => void }) {
                       })()}
                     </div>
 
-                    <h3 className="text-sm font-bold text-white truncate leading-tight">
+                    <h3 className={`text-sm font-extrabold truncate leading-tight ${isDark ? "text-white" : "text-slate-900"}`}>
                       {String((currentStep.node.data as any)?.title || (currentStep.node.data as any)?.label || currentStep.node.id)}
                     </h3>
                   </div>
@@ -505,7 +637,11 @@ function PresentContent({ onExit }: { onExit: () => void }) {
                         setStepIndex((cur) => (cur - 1 + steps.length) % steps.length);
                         setAutoProgress(0);
                       }}
-                      className="rounded-lg border border-gray-700 bg-gray-800 px-2.5 py-1.5 text-xs font-semibold text-gray-200 hover:bg-gray-700 hover:text-white transition flex items-center gap-1"
+                      className={`rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition flex items-center gap-1 ${
+                        isDark
+                          ? "border-[#232c3d] bg-[#151b27] text-slate-200 hover:bg-slate-800"
+                          : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 shadow-xs"
+                      }`}
                       title="Previous Step (Left Arrow)"
                     >
                       <span>◀</span>
@@ -517,7 +653,9 @@ function PresentContent({ onExit }: { onExit: () => void }) {
                       className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition flex items-center gap-1 ${
                         isAutoPlaying
                           ? "bg-amber-600 text-white shadow-md shadow-amber-600/30"
-                          : "border border-emerald-600/60 bg-emerald-950/40 text-emerald-300 hover:bg-emerald-900/60"
+                          : isDark
+                          ? "border border-emerald-600/60 bg-emerald-950/40 text-emerald-300 hover:bg-emerald-900/60"
+                          : "border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 shadow-xs"
                       }`}
                       title={isAutoPlaying ? "Pause Auto Walkthrough (P)" : "Play Auto Walkthrough (P)"}
                     >
@@ -530,7 +668,7 @@ function PresentContent({ onExit }: { onExit: () => void }) {
                         setStepIndex((cur) => (cur + 1) % steps.length);
                         setAutoProgress(0);
                       }}
-                      className="rounded-lg bg-sky-600 hover:bg-sky-500 px-3 py-1.5 text-xs font-bold text-white shadow-md transition flex items-center gap-1"
+                      className="rounded-lg bg-[#c00000] hover:bg-[#a00000] active:scale-95 px-3 py-1.5 text-xs font-bold text-white shadow-md shadow-[#c00000]/25 transition flex items-center gap-1"
                       title="Next Step (Right Arrow or Space)"
                     >
                       <span className="hidden sm:inline">Next</span>
@@ -539,7 +677,11 @@ function PresentContent({ onExit }: { onExit: () => void }) {
 
                     <button
                       onClick={() => fitView({ padding: 0.22, maxZoom: 1.0, duration: 350 })}
-                      className="rounded-lg border border-gray-700 bg-gray-800 px-2 py-1.5 text-xs font-semibold text-gray-300 hover:text-white hover:border-gray-500 transition"
+                      className={`rounded-lg border px-2 py-1.5 text-xs font-semibold transition ${
+                        isDark
+                          ? "border-[#232c3d] bg-[#151b27] text-slate-300 hover:text-white"
+                          : "border-slate-200 bg-slate-50 text-slate-700 hover:text-slate-900 shadow-xs"
+                      }`}
                       title="Fit entire diagram in view"
                     >
                       ⤢ Overview
@@ -547,7 +689,7 @@ function PresentContent({ onExit }: { onExit: () => void }) {
 
                     <button
                       onClick={() => setIsMinimized(true)}
-                      className="text-gray-400 hover:text-white p-1 text-xs"
+                      className={`p-1 text-xs transition ${isDark ? "text-slate-400 hover:text-white" : "text-slate-400 hover:text-slate-700"}`}
                       title="Minimize Remote"
                     >
                       ▾
@@ -556,7 +698,9 @@ function PresentContent({ onExit }: { onExit: () => void }) {
                 </div>
 
                 {/* Progress Dot Trail */}
-                <div className="flex items-center justify-center gap-1 mt-2 pt-1.5 border-t border-gray-800/80">
+                <div className={`flex items-center justify-center gap-1 mt-2 pt-1.5 border-t ${
+                  isDark ? "border-[#232c3d]" : "border-slate-100"
+                }`}>
                   {steps.map((st, i) => (
                     <button
                       key={st.node.id}
@@ -564,10 +708,12 @@ function PresentContent({ onExit }: { onExit: () => void }) {
                         setStepIndex(i);
                         setAutoProgress(0);
                       }}
-                      className={`h-1 rounded-full transition-all ${
+                      className={`h-1.5 rounded-full transition-all ${
                         i === stepIndex
-                          ? "w-5 bg-sky-400 shadow-sm shadow-sky-400/50"
-                          : "w-1.5 bg-gray-700 hover:bg-gray-500"
+                          ? "w-5 bg-[#c00000] shadow-sm shadow-[#c00000]/50"
+                          : isDark
+                          ? "w-1.5 bg-slate-800 hover:bg-slate-600"
+                          : "w-1.5 bg-slate-200 hover:bg-slate-400"
                       }`}
                       title={`Jump to step ${i + 1}: ${String((st.node.data as any)?.title || st.node.id)}`}
                     />

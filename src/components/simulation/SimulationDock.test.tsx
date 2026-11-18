@@ -93,4 +93,73 @@ describe("SimulationDock", () => {
     expect(useSimulationStore.getState().status).toBe("completed");
     expect(screen.getByText(/flow complete!/i)).toBeInTheDocument();
   });
+
+  test("renders Decision Point branch dialog clearly and allows selecting Yes/No branches", () => {
+    const diagram = useEditorStore.getState().diagram!;
+    diagram.nodes.push({
+      id: "dec1",
+      type: "decision",
+      position: { x: 750, y: 0 },
+      data: { title: "Tool Required?", width: 150, height: 80, glow: false },
+    } as any);
+    diagram.nodes.push({
+      id: "branchYes",
+      type: "card",
+      position: { x: 1000, y: -100 },
+      data: { title: "Invoke Tool API", width: 150, height: 60, glow: false },
+    } as any);
+    diagram.nodes.push({
+      id: "branchNo",
+      type: "card",
+      position: { x: 1000, y: 100 },
+      data: { title: "Direct LLM Response", width: 150, height: 60, glow: false },
+    } as any);
+    diagram.edges.push({
+      id: "e-yes",
+      source: "dec1",
+      target: "branchYes",
+      type: "animated",
+      data: { label: "Yes", animation: "dots" },
+    } as any);
+    diagram.edges.push({
+      id: "e-no",
+      source: "dec1",
+      target: "branchNo",
+      type: "animated",
+      data: { label: "No", animation: "dots" },
+    } as any);
+
+    render(<SimulationDock />);
+
+    // Trigger branch choice at decision point
+    act(() => {
+      useSimulationStore.setState({
+        isActive: true,
+        status: "paused",
+        currentNodeId: "dec1",
+        branchChoice: {
+          sourceNodeId: "dec1",
+          sourceTitle: "Tool Required?",
+          branches: [
+            { edgeId: "e-yes", targetId: "branchYes", label: "Yes", targetTitle: "Invoke Tool API" },
+            { edgeId: "e-no", targetId: "branchNo", label: "No", targetTitle: "Direct LLM Response" },
+          ],
+        },
+      });
+    });
+
+    // Dialog must be rendered prominently
+    expect(screen.getByText("Decision Point")).toBeInTheDocument();
+    expect(screen.getAllByText("Tool Required?").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("Yes")).toBeInTheDocument();
+    expect(screen.getByText("No")).toBeInTheDocument();
+
+    // Click "Yes"
+    act(() => {
+      screen.getByText("Yes").click();
+    });
+
+    expect(useSimulationStore.getState().currentNodeId).toBe("branchYes");
+    expect(useSimulationStore.getState().branchChoice).toBeNull();
+  });
 });

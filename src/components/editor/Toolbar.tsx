@@ -53,6 +53,10 @@ export function Toolbar({
   const setAllEdgesPathKind = useEditorStore((s) => s.setAllEdgesPathKind);
   const showMiniMap = useEditorStore((s) => s.showMiniMap);
   const toggleMiniMap = useEditorStore((s) => s.toggleMiniMap);
+  const showPalette = useEditorStore((s) => s.showPalette);
+  const togglePalette = useEditorStore((s) => s.togglePalette);
+  const showInspector = useEditorStore((s) => s.showInspector);
+  const toggleInspector = useEditorStore((s) => s.toggleInspector);
   const setCanvasColor = useEditorStore((s) => s.setCanvasColor);
   const user = useAuthStore((s) => s.user);
 
@@ -276,7 +280,7 @@ export function Toolbar({
 
         {/* MiniMap / Radar Toggle */}
         <button
-          className={`rounded-lg px-2 py-1 text-xs font-semibold transition flex items-center gap-1 shrink-0 ${
+          className={`rounded-lg px-2 py-1 text-xs font-semibold transition flex items-center gap-1 shrink-0 cursor-pointer ${
             showMiniMap
               ? isDark
                 ? "bg-[#c00000]/20 border border-[#c00000]/60 text-[#ffbfbf]"
@@ -290,6 +294,42 @@ export function Toolbar({
         >
           <span>🗺️</span>
           <span className="hidden 2xl:inline">Radar</span>
+        </button>
+
+        {/* Toggle Left Component Library */}
+        <button
+          className={`rounded-lg px-2 py-1 text-xs font-semibold transition flex items-center gap-1 shrink-0 cursor-pointer ${
+            showPalette
+              ? isDark
+                ? "bg-[#c00000]/20 border border-[#c00000]/60 text-[#ffbfbf]"
+                : "bg-[#c00000]/10 border border-[#c00000]/50 text-[#c00000]"
+              : isDark
+              ? "border border-[#232c3d] bg-[#151b27] text-slate-400 hover:text-white"
+              : "border border-slate-200 bg-slate-50 text-slate-600 hover:text-slate-900"
+          }`}
+          onClick={togglePalette}
+          title={showPalette ? "Hide Component Library (Left Sidebar)" : "Show Component Library (Left Sidebar)"}
+        >
+          <span>🧩</span>
+          <span className="hidden 2xl:inline">Library</span>
+        </button>
+
+        {/* Toggle Right Inspector / Properties Panel */}
+        <button
+          className={`rounded-lg px-2 py-1 text-xs font-semibold transition flex items-center gap-1 shrink-0 cursor-pointer ${
+            showInspector
+              ? isDark
+                ? "bg-[#c00000]/20 border border-[#c00000]/60 text-[#ffbfbf]"
+                : "bg-[#c00000]/10 border border-[#c00000]/50 text-[#c00000]"
+              : isDark
+              ? "border border-[#232c3d] bg-[#151b27] text-slate-400 hover:text-white"
+              : "border border-slate-200 bg-slate-50 text-slate-600 hover:text-slate-900"
+          }`}
+          onClick={toggleInspector}
+          title={showInspector ? "Hide Properties Panel (Right Sidebar)" : "Show Properties Panel (Right Sidebar)"}
+        >
+          <span>⚙️</span>
+          <span className="hidden 2xl:inline">Properties</span>
         </button>
 
         {/* Connector Routing Style Dropdown */}

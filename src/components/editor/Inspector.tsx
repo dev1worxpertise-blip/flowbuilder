@@ -30,6 +30,7 @@ export function Inspector({ selection, onClearSelection }: { selection: Sel; onC
   const toggleSnapToGrid = useEditorStore((s) => s.toggleSnapToGrid);
   const showMiniMap = useEditorStore((s) => s.showMiniMap);
   const toggleMiniMap = useEditorStore((s) => s.toggleMiniMap);
+  const toggleInspector = useEditorStore((s) => s.toggleInspector);
   const autoLayout = useEditorStore((s) => s.autoLayout);
   const [showIconPicker, setShowIconPicker] = useState(false);
   const [iconSearch, setIconSearch] = useState("");
@@ -71,15 +72,25 @@ export function Inspector({ selection, onClearSelection }: { selection: Sel; onC
             <span className={`font-bold text-sm ${isDark ? "text-gray-200" : "text-slate-800"}`}>
               Canvas Settings
             </span>
-            <span
-              className={`text-[10px] px-1.5 py-0.5 rounded border font-semibold ${
-                isDark
-                  ? "bg-slate-800 text-slate-400 border-slate-700/60"
-                  : "bg-slate-100 text-slate-600 border-slate-200"
-              }`}
-            >
-              Board
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span
+                className={`text-[10px] px-1.5 py-0.5 rounded border font-semibold ${
+                  isDark
+                    ? "bg-slate-800 text-slate-400 border-slate-700/60"
+                    : "bg-slate-100 text-slate-600 border-slate-200"
+                }`}
+              >
+                Board
+              </span>
+              <button
+                type="button"
+                onClick={toggleInspector}
+                title="Hide Properties Panel (Widescreen Mode)"
+                className="rounded p-0.5 text-xs text-gray-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
           </div>
           <p className={`text-[11px] mt-0.5 ${isDark ? "text-gray-400" : "text-slate-500"}`}>
             Customize workspace background and grid layout.
@@ -345,16 +356,26 @@ export function Inspector({ selection, onClearSelection }: { selection: Sel; onC
               <div className="text-xs uppercase tracking-wide text-sky-400 font-bold">Multi-Selection</div>
               <div className="text-[11px] text-gray-400 font-medium">{selectedNodes.length} Blocks Selected</div>
             </div>
-            {onClearSelection && (
+            <div className="flex items-center gap-2">
+              {onClearSelection && (
+                <button
+                  type="button"
+                  onClick={onClearSelection}
+                  className="text-xs text-gray-400 hover:text-white"
+                  title="Deselect all (Esc)"
+                >
+                  ✕ Deselect
+                </button>
+              )}
               <button
                 type="button"
-                onClick={onClearSelection}
-                className="text-xs text-gray-400 hover:text-white"
-                title="Deselect all (Esc)"
+                onClick={toggleInspector}
+                title="Hide Properties Panel"
+                className="text-gray-400 hover:text-white text-xs p-0.5 rounded hover:bg-gray-800 transition cursor-pointer"
               >
-                ✕ Deselect
+                ✕
               </button>
-            )}
+            </div>
           </div>
 
           {/* Alignment Tools Grid */}
@@ -520,7 +541,17 @@ export function Inspector({ selection, onClearSelection }: { selection: Sel; onC
     return (
       <aside className="w-72 shrink-0 border-l border-gray-800 p-4 space-y-4 text-sm overflow-y-auto max-h-full">
         <div>
-          <div className="text-xs uppercase tracking-wide text-gray-500 font-semibold mb-2">Block Properties</div>
+          <div className="flex items-center justify-between mb-2 pb-1 border-b border-gray-800/60">
+            <span className="text-xs uppercase tracking-wide text-gray-500 font-semibold">Block Properties</span>
+            <button
+              type="button"
+              onClick={toggleInspector}
+              title="Hide Properties Panel"
+              className="text-gray-400 hover:text-white text-xs p-0.5 rounded hover:bg-gray-800 transition cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
           <div className="space-y-3">
             <label className="block text-xs">
               <span className="text-gray-400">Title</span>
@@ -1130,9 +1161,19 @@ export function Inspector({ selection, onClearSelection }: { selection: Sel; onC
 
   return (
     <aside className="w-72 shrink-0 border-l border-gray-800 p-4 space-y-3.5 text-sm overflow-y-auto max-h-full">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pb-1 border-b border-gray-800/60">
         <span className="text-xs uppercase tracking-wide text-gray-500 font-semibold">Connector Properties</span>
-        <span className="h-2 w-2 rounded-full" style={{ background: ed.data.color }} />
+        <div className="flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full" style={{ background: ed.data.color }} />
+          <button
+            type="button"
+            onClick={toggleInspector}
+            title="Hide Properties Panel"
+            className="text-gray-400 hover:text-white text-xs p-0.5 rounded hover:bg-gray-800 transition cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
       </div>
 
       {sourceNode && targetNode && (

@@ -20,6 +20,7 @@ import { NodeSearchModal } from "./NodeSearchModal";
 import { ExportModal } from "../export/ExportModal";
 import { NocModal } from "../noc/NocModal";
 import { useWebhookStore } from "../../store/webhookStore";
+import { useThemeStore } from "../../store/themeStore";
 
 export function EditorView({ onBack, initialPresent = false }: { onBack: () => void; initialPresent?: boolean }) {
   return (
@@ -39,6 +40,21 @@ function EditorViewContent({ onBack, initialPresent = false }: { onBack: () => v
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isNocOpen, setIsNocOpen] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
+
+  const showPalette = useEditorStore((s) => s.showPalette);
+  const togglePalette = useEditorStore((s) => s.togglePalette);
+  const showInspector = useEditorStore((s) => s.showInspector);
+  const toggleInspector = useEditorStore((s) => s.toggleInspector);
+  const setShowInspector = useEditorStore((s) => s.setShowInspector);
+  const theme = useThemeStore((s) => s.theme);
+  const isDark = theme === "dark";
+
+  // Auto-reveal Inspector when user selects a node or edge
+  useEffect(() => {
+    if (selection) {
+      setShowInspector(true);
+    }
+  }, [selection, setShowInspector]);
 
   // Store actions for shortcuts
   const undo = useEditorStore((s) => s.undo);
@@ -108,6 +124,20 @@ function EditorViewContent({ onBack, initialPresent = false }: { onBack: () => v
       if (modifier && e.key.toLowerCase() === "f") {
         e.preventDefault();
         setIsSearchOpen(true);
+        return;
+      }
+
+      // Toggle Component Library Sidebar ([ or Ctrl+B)
+      if ((modifier && e.key.toLowerCase() === "b") || (!modifier && !e.altKey && e.key === "[")) {
+        e.preventDefault();
+        togglePalette();
+        return;
+      }
+
+      // Toggle Properties / Canvas Settings Sidebar (] or Ctrl+J)
+      if ((modifier && e.key.toLowerCase() === "j") || (!modifier && !e.altKey && e.key === "]")) {
+        e.preventDefault();
+        toggleInspector();
         return;
       }
 
@@ -245,11 +275,48 @@ function EditorViewContent({ onBack, initialPresent = false }: { onBack: () => v
         syncStatus={syncStatus}
       />
       <div className="flex flex-1 w-full max-w-full overflow-hidden relative">
-        <Palette />
+        {/* Component Library Sidebar (Collapsible) */}
+        {showPalette ? (
+          <Palette />
+        ) : (
+          <button
+            type="button"
+            onClick={togglePalette}
+            title="Show Component Library (Expand Panel)"
+            className={`absolute left-0 top-3 z-30 flex items-center gap-1.5 rounded-r-xl border border-l-0 px-3 py-2 text-xs font-bold shadow-2xl backdrop-blur transition-all hover:scale-105 cursor-pointer ${
+              isDark
+                ? "border-[#232c3d] bg-[#0d111a]/95 text-slate-200 hover:text-white hover:border-[#c00000] ring-1 ring-white/5"
+                : "border-slate-300 bg-white/95 text-slate-700 hover:text-[#c00000] hover:border-[#c00000] shadow-md ring-1 ring-black/5"
+            }`}
+          >
+            <span className="text-sm">🧩</span>
+            <span className="text-[11px] font-bold tracking-tight">Library ▶</span>
+          </button>
+        )}
+
+        {/* Central Flow Canvas */}
         <div ref={canvasRef} className="flex-1 h-full relative overflow-hidden">
           <Canvas onSelect={setSelection} selection={selection} />
         </div>
-        <Inspector selection={selection} onClearSelection={() => setSelection(null)} />
+
+        {/* Properties / Inspector Sidebar (Collapsible) */}
+        {showInspector ? (
+          <Inspector selection={selection} onClearSelection={() => setSelection(null)} />
+        ) : (
+          <button
+            type="button"
+            onClick={toggleInspector}
+            title="Show Properties / Canvas Settings (Expand Panel)"
+            className={`absolute right-0 top-3 z-30 flex items-center gap-1.5 rounded-l-xl border border-r-0 px-3 py-2 text-xs font-bold shadow-2xl backdrop-blur transition-all hover:scale-105 cursor-pointer ${
+              isDark
+                ? "border-[#232c3d] bg-[#0d111a]/95 text-slate-200 hover:text-white hover:border-[#c00000] ring-1 ring-white/5"
+                : "border-slate-300 bg-white/95 text-slate-700 hover:text-[#c00000] hover:border-[#c00000] shadow-md ring-1 ring-black/5"
+            }`}
+          >
+            <span className="text-[11px] font-bold tracking-tight">◀ Properties</span>
+            <span className="text-sm">⚙️</span>
+          </button>
+        )}
       </div>
 
       <NodeSearchModal

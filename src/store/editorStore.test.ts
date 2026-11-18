@@ -182,3 +182,21 @@ test("setCanvasColor updates diagram canvas color and supports undo/redo", () =>
   expect(useEditorStore.getState().diagram!.canvasColor).toBe("#f8fafc");
 });
 
+test("togglePalette and toggleInspector control sidebar panels visibility", () => {
+  const store = useEditorStore.getState();
+  expect(store.showPalette).toBe(true);
+  expect(store.showInspector).toBe(true);
+
+  store.togglePalette();
+  expect(useEditorStore.getState().showPalette).toBe(false);
+
+  store.toggleInspector();
+  expect(useEditorStore.getState().showInspector).toBe(false);
+
+  store.setShowPalette(true);
+  expect(useEditorStore.getState().showPalette).toBe(true);
+
+  store.setShowInspector(true);
+  expect(useEditorStore.getState().showInspector).toBe(true);
+});
+

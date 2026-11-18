@@ -86,6 +86,15 @@ interface EditorState {
   toggleMiniMap: () => void;
   setShowMiniMap: (show: boolean) => void;
 
+  // Sidebar Panels Visibility (Hide / Unhide)
+  showPalette: boolean;
+  togglePalette: () => void;
+  setShowPalette: (show: boolean) => void;
+
+  showInspector: boolean;
+  toggleInspector: () => void;
+  setShowInspector: (show: boolean) => void;
+
   // Search & Spotlight Highlight
   highlightedNodeId: string | null;
   setHighlightedNodeId: (id: string | null) => void;
@@ -159,6 +168,14 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   showMiniMap: true,
   toggleMiniMap: () => set((s) => ({ showMiniMap: !s.showMiniMap })),
   setShowMiniMap: (show) => set({ showMiniMap: show }),
+
+  showPalette: true,
+  togglePalette: () => set((s) => ({ showPalette: !s.showPalette })),
+  setShowPalette: (show) => set({ showPalette: show }),
+
+  showInspector: true,
+  toggleInspector: () => set((s) => ({ showInspector: !s.showInspector })),
+  setShowInspector: (show) => set({ showInspector: show }),
 
   highlightedNodeId: null,
   setHighlightedNodeId: (id) => set({ highlightedNodeId: id }),

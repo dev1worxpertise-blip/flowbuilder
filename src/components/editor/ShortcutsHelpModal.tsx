@@ -11,6 +11,8 @@ export function ShortcutsHelpModal({ onClose }: { onClose: () => void }) {
     { key: "Ctrl + V", desc: "Paste copied block at offset" },
     { key: "Ctrl + D", desc: "Duplicate selected block instantly" },
     { key: "Delete / Backspace", desc: "Delete selected block or connector" },
+    { key: "[  /  Ctrl + B", desc: "Toggle Component Library (Left Sidebar)" },
+    { key: "]  /  Ctrl + J", desc: "Toggle Properties Panel (Right Sidebar)" },
     { key: "Esc", desc: "Deselect block / Exit present mode" },
   ];
 

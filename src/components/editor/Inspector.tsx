@@ -1180,6 +1180,57 @@ export function Inspector({ selection, onClearSelection }: { selection: Sel; onC
             </button>
           )}
         </div>
+
+        {/* Label Position & Nudge Controls */}
+        {ed.data.label && ed.data.label.trim() !== "" && (
+          <div className="mt-2.5 rounded-lg border border-gray-800 bg-gray-900/50 p-2 text-xs space-y-1.5">
+            <div className="flex items-center justify-between text-[11px] text-gray-400">
+              <span className="font-semibold text-gray-300">Label Position (Nudge Up / Down)</span>
+              {(ed.data.labelOffsetX || ed.data.labelOffsetY) ? (
+                <button
+                  type="button"
+                  onClick={() => updateEdgeData(ed.id, { labelOffsetX: 0, labelOffsetY: 0 })}
+                  className="text-[10px] text-sky-400 hover:text-sky-300 underline cursor-pointer"
+                  title="Reset to center of line"
+                >
+                  ↺ Reset Center
+                </button>
+              ) : (
+                <span className="text-[10px] text-gray-500">Auto Centered</span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1.5 pt-0.5">
+              <button
+                type="button"
+                onClick={() =>
+                  updateEdgeData(ed.id, {
+                    labelOffsetY: ((ed.data.labelOffsetY as number) || 0) - 15,
+                  })
+                }
+                className="flex-1 rounded border border-gray-700 bg-gray-800/80 px-2 py-1 text-[11px] text-gray-200 hover:bg-gray-700 hover:border-gray-500 transition cursor-pointer"
+                title="Move label 15px Up"
+              >
+                ⬆ Up (-15px)
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  updateEdgeData(ed.id, {
+                    labelOffsetY: ((ed.data.labelOffsetY as number) || 0) + 15,
+                  })
+                }
+                className="flex-1 rounded border border-gray-700 bg-gray-800/80 px-2 py-1 text-[11px] text-gray-200 hover:bg-gray-700 hover:border-gray-500 transition cursor-pointer"
+                title="Move label 15px Down"
+              >
+                ⬇ Down (+15px)
+              </button>
+            </div>
+            <p className="text-[10px] text-gray-400 italic">
+              💡 Canvas par bhi label ko mouse se drag kar sakte hain. Double click se wapas center ho jata hai.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Live Edge Animation Preview Box */}

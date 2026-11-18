@@ -46,6 +46,61 @@ export function AnimatedEdge(props: EdgeProps & { data: EdgeData }) {
   const gradId = `grad-${id}`;
   const baseWidth = data.strokeWidth ?? (isIncident ? 3.5 : isTraversing ? 5 : selected ? 3.5 : 2);
 
+  const updateEdgeData = useEditorStore((s) => s.updateEdgeData);
+  const commitSnapshot = useEditorStore((s) => s.commitSnapshot);
+
+  const offsetX = (data.labelOffsetX as number) ?? 0;
+  const offsetY = (data.labelOffsetY as number) ?? 0;
+
+  const handleLabelPointerDown = (e: React.PointerEvent) => {
+    // Only handle primary button drag
+    if (e.button !== 0) return;
+    e.stopPropagation();
+
+    setEdges((edges) =>
+      edges.map((edge) => ({
+        ...edge,
+        selected: edge.id === id,
+      }))
+    );
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const initialOffsetX = offsetX;
+    const initialOffsetY = offsetY;
+    const zoom = (typeof (useReactFlow as any) === "function" && (props as any)?.viewport?.zoom) || 1;
+    let didDrag = false;
+
+    const onPointerMove = (ev: PointerEvent) => {
+      const dx = (ev.clientX - startX) / zoom;
+      const dy = (ev.clientY - startY) / zoom;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+        didDrag = true;
+      }
+      updateEdgeData(id, {
+        labelOffsetX: Math.round(initialOffsetX + dx),
+        labelOffsetY: Math.round(initialOffsetY + dy),
+      });
+    };
+
+    const onPointerUp = () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      if (didDrag) {
+        commitSnapshot();
+      }
+    };
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+  };
+
+  const handleLabelDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    updateEdgeData(id, { labelOffsetX: 0, labelOffsetY: 0 });
+    commitSnapshot();
+  };
+
   const handleLabelClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setEdges((edges) =>
@@ -151,23 +206,34 @@ export function AnimatedEdge(props: EdgeProps & { data: EdgeData }) {
         </>
       )}
 
-      {/* Render Edge Label on path */}
+      {/* Render Edge Label on path (Draggable up/down & double-click to re-center) */}
       {data.label && data.label.trim() !== "" && (
         <EdgeLabelRenderer>
           <div
             onClick={handleLabelClick}
+            onPointerDown={handleLabelPointerDown}
+            onDoubleClick={handleLabelDoubleClick}
+            title="Drag up/down/left/right to reposition. Double-click to re-center."
             style={{
               position: "absolute",
-              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+              transform: `translate(-50%, -50%) translate(${labelX + offsetX}px,${labelY + offsetY}px)`,
               pointerEvents: "all",
             }}
-            className={`nodrag nopan flex cursor-pointer items-center justify-center rounded-md border px-2.5 py-0.5 text-[11px] font-semibold shadow-lg backdrop-blur transition hover:scale-105 ${
+            className={`nodrag nopan flex cursor-grab active:cursor-grabbing select-none items-center justify-center rounded-md border px-2.5 py-0.5 text-[11px] font-semibold shadow-lg backdrop-blur transition hover:scale-105 ${
               selected
                 ? "border-sky-400 bg-[#0f172a] text-white ring-2 ring-sky-500/40"
                 : "border-gray-700/80 bg-[#0f172a]/95 text-gray-200 hover:border-gray-500"
             }`}
           >
             <span style={{ color: selected ? "#38bdf8" : data.color }}>{data.label}</span>
+            {(offsetX !== 0 || offsetY !== 0) && (
+              <span
+                className="ml-1 text-[8px] text-amber-400 font-mono"
+                title={`Offset: ${offsetX}px, ${offsetY}px`}
+              >
+                •
+              </span>
+            )}
           </div>
         </EdgeLabelRenderer>
       )}

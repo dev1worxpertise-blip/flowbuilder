@@ -135,6 +135,8 @@ export interface EdgeData {
   path: PathKind;
   strokeWidth?: number;
   label?: string;
+  labelOffsetX?: number;
+  labelOffsetY?: number;
   [key: string]: unknown;
 }
 

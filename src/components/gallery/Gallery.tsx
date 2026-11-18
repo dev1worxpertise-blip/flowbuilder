@@ -1,9 +1,10 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import type { Diagram } from "../../types";
-import { createEmptyDiagram } from "../../types";
+import { createEmptyDiagram, uid } from "../../types";
 import { listDiagrams, saveDiagram, deleteDiagram } from "../../db/library";
 import { diagramsApi, adminApi } from "../../lib/api";
 import { buildHdlTemplate } from "../../templates/hdl";
+import { diagramFromJson } from "../../lib/exportDiagram";
 import { useAuthStore } from "../../store/authStore";
 import { useThemeStore } from "../../store/themeStore";
 import { UserMenu } from "../auth/UserMenu";
@@ -84,6 +85,35 @@ export function Gallery({ onOpen }: { onOpen: (d: Diagram) => void }) {
       await saveDiagram(d);
     }
     onOpen(d);
+  };
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImportJson = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const diagram = diagramFromJson(text);
+      if (!diagram.id) diagram.id = uid();
+      diagram.updatedAt = Date.now();
+      if (!diagram.createdAt) diagram.createdAt = Date.now();
+      if (user) {
+        try {
+          await diagramsApi.save(diagram);
+        } catch (err) {
+          console.error("Cloud save failed, saving locally:", err);
+          await saveDiagram(diagram);
+        }
+      } else {
+        await saveDiagram(diagram);
+      }
+      onOpen(diagram);
+    } catch (err: any) {
+      alert("Invalid diagram JSON file: " + (err?.message || "Format mismatch"));
+    } finally {
+      e.target.value = "";
+    }
   };
 
   const handleSelectTemplate = async (d: Diagram) => {
@@ -279,6 +309,27 @@ export function Gallery({ onOpen }: { onOpen: (d: Diagram) => void }) {
               <span>📋</span>
               <span className="hidden sm:inline">Templates</span>
             </button>
+
+            {/* Standalone Import JSON Button in Gallery Header */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className={`rounded-xl px-2.5 py-1.5 text-xs font-semibold border transition flex items-center gap-1 shadow-xs shrink-0 ${
+                isLight
+                  ? "bg-white hover:bg-slate-50 border-slate-300 text-slate-700 hover:text-slate-900"
+                  : "bg-[#151b27] hover:bg-slate-800 border-[#232c3d] text-slate-200 hover:text-white"
+              }`}
+              title="Import a FlowBuilder JSON file directly"
+            >
+              <span>📂</span>
+              <span className="hidden sm:inline">Import JSON</span>
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/json"
+              className="hidden"
+              onChange={handleImportJson}
+            />
 
             {/* User Profile Pill Menu */}
             <UserMenu onOpenAdmin={() => setIsAdminDashboardOpen(true)} />
@@ -513,6 +564,20 @@ export function Gallery({ onOpen }: { onOpen: (d: Diagram) => void }) {
               >
                 Start with a blank canvas
               </p>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  fileInputRef.current?.click();
+                }}
+                className={`mt-2.5 px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition flex items-center gap-1 ${
+                  isLight
+                    ? "border-slate-200 bg-slate-50 text-slate-700 hover:border-[#c00000] hover:text-[#c00000] hover:bg-white"
+                    : "border-slate-700 bg-slate-800/60 text-slate-300 hover:border-[#c00000] hover:text-white"
+                }`}
+              >
+                <span>📂</span> Import JSON File
+              </button>
             </div>
 
             {/* Diagram Items */}

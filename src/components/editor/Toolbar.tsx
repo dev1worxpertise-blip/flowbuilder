@@ -635,6 +635,20 @@ export function Toolbar({
           )}
         </div>
 
+        {/* Standalone Import JSON Button */}
+        <button
+          onClick={() => fileRef.current?.click()}
+          className={`rounded-lg border px-2 py-1 text-xs font-semibold transition flex items-center gap-1 shadow-xs shrink-0 ${
+            isDark
+              ? "border-[#232c3d] bg-[#151b27] text-slate-200 hover:text-white hover:border-[#c00000]/70"
+              : "border-slate-200 bg-slate-50 text-slate-700 hover:text-slate-900 hover:border-slate-400"
+          }`}
+          title="Import FlowBuilder diagram JSON from file"
+        >
+          <span>📂</span>
+          <span className="hidden sm:inline">Import JSON</span>
+        </button>
+
         {/* Unified 📸 Export Dropdown Menu */}
         <div className={`relative border-l pl-1 ${isDark ? "border-[#232c3d]" : "border-slate-200"}`} ref={exportRef}>
           <button

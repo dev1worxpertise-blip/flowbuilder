@@ -190,7 +190,7 @@ export function Toolbar({
               title={syncStatus === "saving" ? "Saving..." : syncStatus === "error" ? "Cloud error" : "Saved to cloud"}
             >
               {syncStatus === "saving" ? "⏳" : syncStatus === "error" ? "⚠️" : "☁️"}
-              <span className="hidden xl:inline">
+              <span className="hidden 2xl:inline">
                 {syncStatus === "saving" ? "Saving" : syncStatus === "error" ? "Error" : "Saved"}
               </span>
             </span>
@@ -203,7 +203,7 @@ export function Toolbar({
               }`}
               title="Local storage"
             >
-              💾 <span className="hidden xl:inline">Local</span>
+              💾 <span className="hidden 2xl:inline">Local</span>
             </span>
           )}
         </div>

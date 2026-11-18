@@ -65,11 +65,11 @@ export function UserMenu({ onOpenAdmin }: { onOpenAdmin?: () => void }) {
         >
           {initials}
         </span>
-        <span className="hidden xl:inline max-w-[90px] truncate font-medium text-xs">
+        <span className="hidden 2xl:inline max-w-[90px] truncate font-medium text-xs">
           {user.name}
         </span>
         {isAdmin && (
-          <span className={`hidden xl:inline rounded px-1 py-0.2 text-[9px] font-bold ${
+          <span className={`hidden 2xl:inline rounded px-1 py-0.2 text-[9px] font-bold ${
             isDark
               ? "bg-amber-950/70 border border-amber-800 text-amber-300"
               : "bg-amber-100 border border-amber-300 text-amber-800"

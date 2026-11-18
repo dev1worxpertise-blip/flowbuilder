@@ -49,4 +49,20 @@ describe("buildGuidedTour", () => {
     const tour = buildGuidedTour(nodes, []);
     expect(tour.map((t) => t.node.id)).toEqual(["n1"]);
   });
+
+  it("prioritizes explicit start node over auxiliary disconnected notes and follows causal edges like simulation", () => {
+    const nodes = [
+      { id: "note1", type: "note", position: { x: 50, y: 50 }, data: { title: "Architecture Legend" } },
+      { id: "start", type: "card", position: { x: 100, y: 200 }, data: { title: "Start Call" } },
+      { id: "step2", type: "card", position: { x: 300, y: 200 }, data: { title: "Process Audio" } },
+      { id: "step3", type: "card", position: { x: 500, y: 200 }, data: { title: "AI Response" } },
+    ] as any as FlowNode[];
+    const edges = [
+      { id: "e1", source: "start", target: "step2", data: {} },
+      { id: "e2", source: "step2", target: "step3", data: {} },
+    ] as any as FlowEdge[];
+
+    const tour = buildGuidedTour(nodes, edges);
+    expect(tour.map((t) => t.node.id)).toEqual(["start", "step2", "step3", "note1"]);
+  });
 });

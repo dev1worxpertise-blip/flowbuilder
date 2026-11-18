@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useReactFlow } from "@xyflow/react";
 import { useSimulationStore } from "../../store/simulationStore";
 import { useEditorStore } from "../../store/editorStore";
@@ -21,6 +21,22 @@ export function SimulationDock() {
   const chooseBranch = useSimulationStore((s) => s.chooseBranch);
   const restartSimulation = useSimulationStore((s) => s.restartSimulation);
   const stopSimulation = useSimulationStore((s) => s.stopSimulation);
+
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFs = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handleFs);
+    return () => document.removeEventListener("fullscreenchange", handleFs);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.().catch(() => {});
+    } else {
+      document.exitFullscreen?.().catch(() => {});
+    }
+  };
 
   const timerRef = useRef<number | null>(null);
 
@@ -173,6 +189,21 @@ export function SimulationDock() {
               {s}x
             </button>
           ))}
+        </div>
+
+        {/* Fullscreen Toggle Button */}
+        <div className="border-l border-gray-800 pl-2">
+          <button
+            onClick={toggleFullscreen}
+            className={`flex h-7 w-7 items-center justify-center rounded-full transition text-xs ${
+              isFullscreen
+                ? "bg-[#c00000] text-white hover:bg-[#a50000]"
+                : "text-gray-300 hover:bg-gray-800 hover:text-white"
+            }`}
+            title={isFullscreen ? "Exit Fullscreen (F)" : "Enter Fullscreen (F)"}
+          >
+            {isFullscreen ? "🗗" : "⛶"}
+          </button>
         </div>
 
         {/* Exit Button */}

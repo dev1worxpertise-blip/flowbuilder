@@ -39,17 +39,24 @@ export interface Bounds { x: number; y: number; width: number; height: number; }
 /** Bounding box (in flow coordinates) that encloses every node, plus padding.
  *  Used so exports capture the whole diagram, not just the on-screen viewport. */
 export function diagramBounds(
-  nodes: { position: { x: number; y: number }; data: { width?: number; height?: number } }[],
+  nodes: { position: { x: number; y: number }; data?: { width?: number; height?: number } }[],
   pad = 100,
 ): Bounds {
-  if (!nodes.length) return { x: 0, y: 0, width: 0, height: 0 };
+  if (!nodes || !nodes.length) return { x: 0, y: 0, width: 0, height: 0 };
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   for (const n of nodes) {
-    const w = n.data.width ?? 0, h = n.data.height ?? 0;
-    minX = Math.min(minX, n.position.x);
-    minY = Math.min(minY, n.position.y);
-    maxX = Math.max(maxX, n.position.x + w);
-    maxY = Math.max(maxY, n.position.y + h);
+    if (!n || !n.position) continue;
+    const x = typeof n.position.x === "number" && isFinite(n.position.x) ? n.position.x : 0;
+    const y = typeof n.position.y === "number" && isFinite(n.position.y) ? n.position.y : 0;
+    const w = (n as any).data?.width ?? (n as any).width ?? (n as any).measured?.width ?? 200;
+    const h = (n as any).data?.height ?? (n as any).height ?? (n as any).measured?.height ?? 90;
+    minX = Math.min(minX, x);
+    minY = Math.min(minY, y);
+    maxX = Math.max(maxX, x + w);
+    maxY = Math.max(maxY, y + h);
+  }
+  if (!isFinite(minX) || !isFinite(minY) || !isFinite(maxX) || !isFinite(maxY)) {
+    return { x: 0, y: 0, width: 0, height: 0 };
   }
   return { x: minX - pad, y: minY - pad, width: maxX - minX + pad * 2, height: maxY - minY + pad * 2 };
 }
@@ -72,15 +79,17 @@ export async function exportImage(
   filterFn: (node: HTMLElement) => boolean = exportFilter,
   options?: ExportImageOptions,
 ): Promise<string> {
-  const width = Math.ceil(bounds.width) || viewport.clientWidth;
-  const height = Math.ceil(bounds.height) || viewport.clientHeight;
+  const width = Math.max(100, Math.ceil(bounds.width) || viewport.clientWidth || 1200);
+  const height = Math.max(100, Math.ceil(bounds.height) || viewport.clientHeight || 800);
   const bg = options?.backgroundColor === "transparent" ? undefined : (options?.backgroundColor ?? "#0a0e1a");
+  const pixelRatio = Math.min(options?.pixelRatio ?? 2, 3);
   const opts = {
     backgroundColor: bg,
-    pixelRatio: options?.pixelRatio ?? 2,
+    pixelRatio,
     filter: filterFn,
     skipFonts: true,
     cacheBust: true,
+    imagePlaceholder: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
     width,
     height,
     style: {
@@ -90,7 +99,40 @@ export async function exportImage(
       transformOrigin: "top left",
     },
   };
-  return format === "png" ? toPng(viewport, opts) : toSvg(viewport, opts);
+
+  if (format === "svg") {
+    return toSvg(viewport, opts);
+  }
+
+  // Attempt direct toPng
+  try {
+    return await toPng(viewport, opts);
+  } catch (pngErr) {
+    console.warn("Direct toPng failed, using toSvg + Canvas conversion:", pngErr);
+    const svgDataUrl = await toSvg(viewport, opts);
+    return await new Promise<string>((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.round(width * pixelRatio);
+          canvas.height = Math.round(height * pixelRatio);
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return resolve(svgDataUrl);
+          if (bg && bg !== "transparent") {
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+          }
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL("image/png"));
+        } catch {
+          resolve(svgDataUrl);
+        }
+      };
+      img.onerror = () => resolve(svgDataUrl);
+      img.src = svgDataUrl;
+    });
+  }
 }
 
 export interface PosterOptions {
@@ -175,7 +217,8 @@ export async function exportPoster(
       ctx.drawImage(img, 0, headerH);
       resolve(canvas.toDataURL("image/png"));
     };
-    img.onerror = reject;
+    img.onerror = () => resolve(baseDataUrl);
+    setTimeout(() => resolve(baseDataUrl), 4000);
     img.src = baseDataUrl;
   });
 }
@@ -201,15 +244,29 @@ export function dataUrlToBlob(dataUrl: string): Blob {
  * reliably across browsers — a detached anchor on a data: URL is not.
  */
 export function downloadDataUrl(dataUrl: string, filename: string): void {
-  const url = URL.createObjectURL(dataUrlToBlob(dataUrl));
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.style.display = "none";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1500);
+  try {
+    const blob = dataUrlToBlob(dataUrl);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      a.remove();
+      URL.revokeObjectURL(url);
+    }, 1500);
+  } catch (err) {
+    console.warn("Blob download failed, using direct dataUrl fallback:", err);
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = filename;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => a.remove(), 1500);
+  }
 }
 
 export interface ExportPdfOptions {

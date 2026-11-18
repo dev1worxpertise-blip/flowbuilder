@@ -253,7 +253,8 @@ function EditorViewContent({ onBack, initialPresent = false }: { onBack: () => v
       const url = await exportImage(viewport, fmt, diagramBounds(diagram.nodes), undefined, {
         backgroundColor: exportBg,
       });
-      downloadDataUrl(url, `${diagram.name ?? "diagram"}.${fmt}`);
+      const ext = url.startsWith("data:image/svg") ? "svg" : fmt;
+      downloadDataUrl(url, `${diagram.name ?? "diagram"}.${ext}`);
     } catch (err) {
       console.error("Export image failed:", err);
       alert("Failed to export diagram image. " + (err instanceof Error ? err.message : String(err)));

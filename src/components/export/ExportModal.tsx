@@ -59,7 +59,8 @@ export function ExportModal({ diagram, isOpen, onClose, viewportElement }: Expor
         backgroundColor: posterBg,
         includeHeader,
       });
-      downloadDataUrl(dataUrl, `${diagram.name || "diagram"}_poster_${posterScale}x.${posterFormat}`);
+      const ext = dataUrl.startsWith("data:image/svg") ? "svg" : posterFormat;
+      downloadDataUrl(dataUrl, `${diagram.name || "diagram"}_poster_${posterScale}x.${ext}`);
     } catch (err) {
       console.error("Poster export failed:", err);
       alert("Poster export failed: " + (err instanceof Error ? err.message : String(err)));

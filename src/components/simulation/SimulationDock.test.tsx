@@ -21,19 +21,19 @@ describe("SimulationDock", () => {
         id: "step1",
         type: "pill",
         position: { x: 0, y: 0 },
-        data: { title: "1. Step One", width: 150, height: 60, glow: false },
+        data: { title: "1. Step One", subtitle: "", accent: "neutral", width: 150, height: 60, glow: false },
       },
       {
         id: "step2",
         type: "card",
         position: { x: 250, y: 0 },
-        data: { title: "2. Step Two", width: 150, height: 60, glow: false },
+        data: { title: "2. Step Two", subtitle: "", accent: "neutral", width: 150, height: 60, glow: false },
       },
       {
         id: "step3",
         type: "card",
         position: { x: 500, y: 0 },
-        data: { title: "3. Step Three", width: 150, height: 60, glow: false },
+        data: { title: "3. Step Three", subtitle: "", accent: "neutral", width: 150, height: 60, glow: false },
       },
     ];
     diagram.edges = [

@@ -3,6 +3,19 @@ import jsPDF from "jspdf";
 import { GIFEncoder, quantize, applyPalette } from "gifenc";
 import type { Diagram, FlowNode, FlowEdge } from "../types";
 
+/**
+ * Sanitize a filename to remove illegal Windows/Linux characters (\ / : * ? " < > |).
+ * Essential on Windows where characters like '|' cause silent or fatal download failures.
+ */
+export function sanitizeFilename(name?: string, fallback = "diagram"): string {
+  if (!name || typeof name !== "string") return fallback;
+  const clean = name
+    .replace(/[<>:"/\\|?*\x00-\x1F]/g, "-")
+    .replace(/\s+/g, " ")
+    .trim();
+  return clean || fallback;
+}
+
 export function diagramToJson(d: Diagram): string {
   return JSON.stringify(d, null, 2);
 }
@@ -37,17 +50,32 @@ export function exportFilter(node: HTMLElement): boolean {
 export interface Bounds { x: number; y: number; width: number; height: number; }
 
 /** Bounding box (in flow coordinates) that encloses every node, plus padding.
- *  Used so exports capture the whole diagram, not just the on-screen viewport. */
+ *  Handles parent group containers so child node offsets are correctly resolved. */
 export function diagramBounds(
-  nodes: { position: { x: number; y: number }; data?: { width?: number; height?: number } }[],
+  nodes: { id?: string; position: { x: number; y: number }; parentId?: string; data?: { width?: number; height?: number } }[],
   pad = 100,
 ): Bounds {
   if (!nodes || !nodes.length) return { x: 0, y: 0, width: 0, height: 0 };
+
+  const posMap = new Map<string, { x: number; y: number }>();
+  for (const n of nodes) {
+    if (n && n.id) {
+      posMap.set(n.id, { x: n.position?.x ?? 0, y: n.position?.y ?? 0 });
+    }
+  }
+
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   for (const n of nodes) {
     if (!n || !n.position) continue;
-    const x = typeof n.position.x === "number" && isFinite(n.position.x) ? n.position.x : 0;
-    const y = typeof n.position.y === "number" && isFinite(n.position.y) ? n.position.y : 0;
+    let x = typeof n.position.x === "number" && isFinite(n.position.x) ? n.position.x : 0;
+    let y = typeof n.position.y === "number" && isFinite(n.position.y) ? n.position.y : 0;
+
+    if (n.parentId && posMap.has(n.parentId)) {
+      const parentPos = posMap.get(n.parentId)!;
+      x += parentPos.x;
+      y += parentPos.y;
+    }
+
     const w = (n as any).data?.width ?? (n as any).width ?? (n as any).measured?.width ?? 200;
     const h = (n as any).data?.height ?? (n as any).height ?? (n as any).measured?.height ?? 90;
     minX = Math.min(minX, x);
@@ -70,7 +98,7 @@ export interface ExportImageOptions {
  * Render the entire diagram to an image. Pass the `.react-flow__viewport`
  * element and the flow-coordinate bounds of all nodes; the viewport is
  * re-transformed to frame the full diagram at 1:1 so nothing is clipped by
- * the on-screen pan/zoom.
+ * the on-screen pan/zoom. Clamps dimensions to 4096px to avoid browser canvas memory crashes.
  */
 export async function exportImage(
   viewport: HTMLElement,
@@ -79,10 +107,24 @@ export async function exportImage(
   filterFn: (node: HTMLElement) => boolean = exportFilter,
   options?: ExportImageOptions,
 ): Promise<string> {
-  const width = Math.max(100, Math.ceil(bounds.width) || viewport.clientWidth || 1200);
-  const height = Math.max(100, Math.ceil(bounds.height) || viewport.clientHeight || 800);
-  const bg = options?.backgroundColor === "transparent" ? undefined : (options?.backgroundColor ?? "#0a0e1a");
-  const pixelRatio = Math.min(options?.pixelRatio ?? 2, 3);
+  const el = viewport || document.querySelector<HTMLElement>(".react-flow__viewport");
+  if (!el) {
+    throw new Error("Unable to locate canvas viewport for export.");
+  }
+
+  const rawWidth = Math.max(100, Math.ceil(bounds.width) || el.clientWidth || 1200);
+  const rawHeight = Math.max(100, Math.ceil(bounds.height) || el.clientHeight || 800);
+  const bg = options?.backgroundColor === "transparent" ? undefined : (options?.backgroundColor ?? "#0a0d15");
+
+  // Prevent canvas memory allocation overflow (clamp max canvas dimension to 4096px)
+  const maxDim = Math.max(rawWidth, rawHeight);
+  const requestedRatio = options?.pixelRatio ?? 2;
+  const maxRatio = Math.max(1, Math.min(3, Math.floor(4096 / maxDim)));
+  const pixelRatio = Math.min(requestedRatio, maxRatio);
+
+  const width = rawWidth;
+  const height = rawHeight;
+
   const opts = {
     backgroundColor: bg,
     pixelRatio,
@@ -101,22 +143,22 @@ export async function exportImage(
   };
 
   if (format === "svg") {
-    return toSvg(viewport, opts);
+    return toSvg(el, opts);
   }
 
   // Attempt direct toPng
   try {
-    return await toPng(viewport, opts);
+    return await toPng(el, opts);
   } catch (pngErr) {
-    console.warn("Direct toPng failed, using toSvg + Canvas conversion:", pngErr);
-    const svgDataUrl = await toSvg(viewport, opts);
+    console.warn("Direct toPng failed, falling back to toSvg + Canvas conversion:", pngErr);
+    const svgDataUrl = await toSvg(el, opts);
     return await new Promise<string>((resolve) => {
       const img = new Image();
       img.onload = () => {
         try {
           const canvas = document.createElement("canvas");
-          canvas.width = Math.round(width * pixelRatio);
-          canvas.height = Math.round(height * pixelRatio);
+          canvas.width = Math.min(4096, Math.round(width * pixelRatio));
+          canvas.height = Math.min(4096, Math.round(height * pixelRatio));
           const ctx = canvas.getContext("2d");
           if (!ctx) return resolve(svgDataUrl);
           if (bg && bg !== "transparent") {
@@ -124,7 +166,12 @@ export async function exportImage(
             ctx.fillRect(0, 0, canvas.width, canvas.height);
           }
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          resolve(canvas.toDataURL("image/png"));
+          try {
+            resolve(canvas.toDataURL("image/png"));
+          } catch {
+            // Tainted canvas fallback: return clean SVG data URL
+            resolve(svgDataUrl);
+          }
         } catch {
           resolve(svgDataUrl);
         }
@@ -154,7 +201,7 @@ export async function exportPoster(
 ): Promise<string> {
   const scale = options?.scale ?? 2;
   const format = options?.format ?? "png";
-  const bg = options?.backgroundColor ?? "#0a0e1a";
+  const bg = options?.backgroundColor ?? "#0a0d15";
   const includeHeader = options?.includeHeader ?? false;
 
   const baseDataUrl = await exportImage(viewport, format, bounds, exportFilter, {
@@ -167,55 +214,63 @@ export async function exportPoster(
   }
 
   // Composite header onto canvas
-  return new Promise<string>((resolve, reject) => {
+  return new Promise<string>((resolve) => {
     const img = new Image();
     img.onload = () => {
-      const origW = img.naturalWidth || img.width;
-      const origH = img.naturalHeight || img.height;
-      const headerH = Math.max(90, Math.round(100 * (scale / 2)));
+      try {
+        const origW = img.naturalWidth || img.width;
+        const origH = img.naturalHeight || img.height;
+        const headerH = Math.max(90, Math.round(100 * (scale / 2)));
 
-      const canvas = document.createElement("canvas");
-      canvas.width = origW;
-      canvas.height = origH + headerH;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.min(4096, origW);
+        canvas.height = Math.min(4096, origH + headerH);
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(baseDataUrl);
+          return;
+        }
+
+        // Fill background
+        if (bg !== "transparent") {
+          ctx.fillStyle = bg;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // Draw header banner
+        ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
+        ctx.fillRect(0, 0, canvas.width, headerH);
+        ctx.strokeStyle = "rgba(56, 189, 248, 0.3)";
+        ctx.lineWidth = Math.max(1, Math.round(scale));
+        ctx.beginPath();
+        ctx.moveTo(0, headerH);
+        ctx.lineTo(canvas.width, headerH);
+        ctx.stroke();
+
+        // Title
+        const titleSize = Math.max(16, Math.round(24 * (scale / 2)));
+        ctx.font = `bold ${titleSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+        ctx.fillStyle = "#38bdf8";
+        ctx.fillText(diagram.name || "Flowchart Diagram", 24 * (scale / 2), headerH * 0.45);
+
+        // Subtitle & Metrics
+        const subSize = Math.max(11, Math.round(13 * (scale / 2)));
+        ctx.font = `${subSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+        ctx.fillStyle = "#94a3b8";
+        const dateStr = new Date(diagram.updatedAt || Date.now()).toLocaleDateString();
+        const meta = `${diagram.nodes.length} Components  •  ${diagram.edges.length} Pipelines  •  Generated by FlowBuilder DevOps  •  ${dateStr}`;
+        ctx.fillText(meta, 24 * (scale / 2), headerH * 0.78);
+
+        // Draw diagram snapshot below header
+        ctx.drawImage(img, 0, headerH);
+        try {
+          resolve(canvas.toDataURL("image/png"));
+        } catch {
+          resolve(baseDataUrl);
+        }
+      } catch {
         resolve(baseDataUrl);
-        return;
       }
-
-      // Fill background
-      if (bg !== "transparent") {
-        ctx.fillStyle = bg;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      }
-
-      // Draw header banner
-      ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
-      ctx.fillRect(0, 0, canvas.width, headerH);
-      ctx.strokeStyle = "rgba(56, 189, 248, 0.3)";
-      ctx.lineWidth = Math.max(1, Math.round(scale));
-      ctx.beginPath();
-      ctx.moveTo(0, headerH);
-      ctx.lineTo(canvas.width, headerH);
-      ctx.stroke();
-
-      // Title
-      const titleSize = Math.max(16, Math.round(24 * (scale / 2)));
-      ctx.font = `bold ${titleSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-      ctx.fillStyle = "#38bdf8";
-      ctx.fillText(diagram.name || "Flowchart Diagram", 24 * (scale / 2), headerH * 0.45);
-
-      // Subtitle & Metrics
-      const subSize = Math.max(11, Math.round(13 * (scale / 2)));
-      ctx.font = `${subSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-      ctx.fillStyle = "#94a3b8";
-      const dateStr = new Date(diagram.updatedAt || Date.now()).toLocaleDateString();
-      const meta = `${diagram.nodes.length} Components  •  ${diagram.edges.length} Pipelines  •  Generated by FlowBuilder DevOps  •  ${dateStr}`;
-      ctx.fillText(meta, 24 * (scale / 2), headerH * 0.78);
-
-      // Draw diagram snapshot below header
-      ctx.drawImage(img, 0, headerH);
-      resolve(canvas.toDataURL("image/png"));
     };
     img.onerror = () => resolve(baseDataUrl);
     setTimeout(() => resolve(baseDataUrl), 4000);
@@ -225,43 +280,70 @@ export async function exportPoster(
 
 /** Convert a data: URL (base64 or URL-encoded) into a Blob, preserving its MIME type. */
 export function dataUrlToBlob(dataUrl: string): Blob {
+  if (dataUrl.startsWith("blob:")) {
+    return new Blob([dataUrl], { type: "text/plain" });
+  }
   const comma = dataUrl.indexOf(",");
+  if (comma === -1) {
+    return new Blob([dataUrl], { type: "application/octet-stream" });
+  }
   const header = dataUrl.slice(0, comma);
   const body = dataUrl.slice(comma + 1);
   const mime = header.match(/data:([^;,]+)/)?.[1] ?? "application/octet-stream";
   if (header.includes(";base64")) {
-    const binary = atob(body);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    return new Blob([bytes], { type: mime });
+    try {
+      const cleanBody = body.replace(/\s/g, "");
+      const binary = atob(cleanBody);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      return new Blob([bytes], { type: mime });
+    } catch (e) {
+      console.warn("Base64 decode failed in dataUrlToBlob:", e);
+    }
   }
-  return new Blob([decodeURIComponent(body)], { type: mime });
+  try {
+    return new Blob([decodeURIComponent(body)], { type: mime });
+  } catch {
+    return new Blob([body], { type: mime });
+  }
 }
 
 /**
- * Download a data: URL with the given filename. Routes through a Blob object URL
- * and a DOM-attached anchor so the filename (including its extension) is honored
- * reliably across browsers — a detached anchor on a data: URL is not.
+ * Download a data: URL or blob: URL with the given filename.
+ * Automatically sanitizes the filename to prevent Windows filesystem failures (e.g., pipe '|' character).
  */
 export function downloadDataUrl(dataUrl: string, filename: string): void {
+  const safeFilename = sanitizeFilename(filename, "diagram");
+
+  if (dataUrl.startsWith("blob:")) {
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = safeFilename;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => a.remove(), 1500);
+    return;
+  }
+
   try {
     const blob = dataUrlToBlob(dataUrl);
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = filename;
+    a.download = safeFilename;
     a.style.display = "none";
     document.body.appendChild(a);
     a.click();
     setTimeout(() => {
       a.remove();
       URL.revokeObjectURL(url);
-    }, 1500);
+    }, 2000);
   } catch (err) {
     console.warn("Blob download failed, using direct dataUrl fallback:", err);
     const a = document.createElement("a");
     a.href = dataUrl;
-    a.download = filename;
+    a.download = safeFilename;
     a.style.display = "none";
     document.body.appendChild(a);
     a.click();
@@ -346,7 +428,17 @@ export async function exportPdf(
   pdf.setLineWidth(0.5);
   pdf.rect(posX - 1, posY - 1, renderW + 2, renderH + 2);
 
-  pdf.addImage(imgData, "PNG", posX, posY, renderW, renderH, undefined, "FAST");
+  try {
+    pdf.addImage(imgData, "PNG", posX, posY, renderW, renderH, undefined, "FAST");
+  } catch (imgErr) {
+    console.warn("Could not embed raw image directly into PDF, drawing title block fallback:", imgErr);
+    pdf.setFillColor(15, 23, 42);
+    pdf.rect(posX, posY, renderW, renderH, "F");
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(12);
+    pdf.setTextColor(56, 189, 248);
+    pdf.text(diagram.name || "Flowchart Diagram", posX + 10, posY + renderH / 2);
+  }
 
   // Page 1 Footer
   pdf.setFontSize(8);
@@ -563,7 +655,7 @@ export async function exportPdf(
     );
   }
 
-  pdf.save(`${diagram.name || "flowchart"}.pdf`);
+  pdf.save(`${sanitizeFilename(diagram.name, "flowchart")}.pdf`);
 }
 
 /**
@@ -730,7 +822,7 @@ export async function exportGif(
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `${diagram.name || "flowchart"}.gif`;
+  a.download = `${sanitizeFilename(diagram.name, "flowchart")}.gif`;
   a.style.display = "none";
   document.body.appendChild(a);
   a.click();

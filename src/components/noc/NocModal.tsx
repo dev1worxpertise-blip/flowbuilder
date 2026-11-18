@@ -6,7 +6,6 @@ import { HEALTH_STATUS_CONFIG, type NodeHealthStatus } from "../../types";
 
 export function NocModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const diagram = useEditorStore((s) => s.diagram);
-  const updateNodeData = useEditorStore((s) => s.updateNodeData);
   const { isConnected, events, triggerWebhook, clearEvents, getNocSummary } = useWebhookStore();
 
   const [copiedId, setCopiedId] = useState<string | null>(null);

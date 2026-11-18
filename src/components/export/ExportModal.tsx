@@ -7,6 +7,7 @@ import {
   diagramToJson,
   downloadDataUrl,
   diagramBounds,
+  sanitizeFilename,
 } from "../../lib/exportDiagram";
 import { useThemeStore } from "../../store/themeStore";
 import { getEffectiveCanvasBg } from "../../lib/theme";
@@ -60,7 +61,8 @@ export function ExportModal({ diagram, isOpen, onClose, viewportElement }: Expor
         includeHeader,
       });
       const ext = dataUrl.startsWith("data:image/svg") ? "svg" : posterFormat;
-      downloadDataUrl(dataUrl, `${diagram.name || "diagram"}_poster_${posterScale}x.${ext}`);
+      const safeName = sanitizeFilename(diagram.name, "diagram");
+      downloadDataUrl(dataUrl, `${safeName}_poster_${posterScale}x.${ext}`);
     } catch (err) {
       console.error("Poster export failed:", err);
       alert("Poster export failed: " + (err instanceof Error ? err.message : String(err)));
@@ -106,9 +108,10 @@ export function ExportModal({ diagram, isOpen, onClose, viewportElement }: Expor
   };
 
   const handleExportJson = () => {
+    const safeName = sanitizeFilename(diagram.name, "diagram");
     downloadDataUrl(
       "data:application/json," + encodeURIComponent(diagramToJson(diagram)),
-      `${diagram.name || "diagram"}.json`
+      `${safeName}.json`
     );
   };
 

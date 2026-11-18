@@ -43,9 +43,9 @@ describe("useWebhookStore", () => {
     const n2 = editor.addNode("card", { x: 100, y: 0 });
     const n3 = editor.addNode("card", { x: 200, y: 0 });
 
-    editor.updateNodeData(n1.id, { healthStatus: "healthy", metric: "14ms" });
-    editor.updateNodeData(n2.id, { healthStatus: "warning", metric: "650ms" });
-    editor.updateNodeData(n3.id, { healthStatus: "down", metric: "500 Error" });
+    if (n1) editor.updateNodeData(n1.id, { healthStatus: "healthy", metric: "14ms" });
+    if (n2) editor.updateNodeData(n2.id, { healthStatus: "warning", metric: "650ms" });
+    if (n3) editor.updateNodeData(n3.id, { healthStatus: "down", metric: "500 Error" });
 
     const summary = useWebhookStore.getState().getNocSummary();
     expect(summary.healthy).toBe(1);
@@ -65,10 +65,11 @@ describe("useWebhookStore", () => {
   it("should handle triggerWebhook fallback when offline", async () => {
     const editor = useEditorStore.getState();
     const node = editor.addNode("card", { x: 0, y: 0 });
+    if (!node) return;
 
     // Mock fetch to simulate failure and verify graceful fallback
-    const originalFetch = global.fetch;
-    global.fetch = vi.fn().mockRejectedValue(new Error("Network offline"));
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = vi.fn().mockRejectedValue(new Error("Network offline"));
 
     const result = await useWebhookStore.getState().triggerWebhook(
       "diag_local",
@@ -84,7 +85,7 @@ describe("useWebhookStore", () => {
     expect(updated?.data.healthStatus).toBe("down");
     expect(updated?.data.metric).toBe("504 Timeout");
 
-    global.fetch = originalFetch;
+    globalThis.fetch = originalFetch;
   });
 
   it("should clear events", () => {

@@ -108,7 +108,7 @@ export function CardNode({ id, data, selected }: NodeProps & { data: NodeData })
         ) : icon ? (
           <div className="flex shrink-0 items-center justify-center">
             {isImageSrc(icon) ? (
-              <img src={icon} alt="" className="h-10 w-10 rounded-md object-cover" />
+              <img src={icon} crossOrigin="anonymous" alt="" className="h-10 w-10 rounded-md object-cover" />
             ) : (
               <span className="text-3xl leading-none">{icon}</span>
             )}

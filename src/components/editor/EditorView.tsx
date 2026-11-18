@@ -10,6 +10,7 @@ import {
   diagramBounds,
   exportPdf,
   exportGif,
+  sanitizeFilename,
 } from "../../lib/exportDiagram";
 import { Toolbar, SyncStatus } from "./Toolbar";
 import { Palette } from "./Palette";
@@ -247,14 +248,18 @@ function EditorViewContent({ onBack, initialPresent = false }: { onBack: () => v
   const onExportImage = async (fmt: "png" | "svg") => {
     if (!diagram) return;
     const viewport = canvasRef.current?.querySelector<HTMLElement>(".react-flow__viewport") || document.querySelector<HTMLElement>(".react-flow__viewport");
-    if (!viewport) return;
+    if (!viewport) {
+      alert("Unable to locate canvas viewport for export. Please ensure diagram is visible.");
+      return;
+    }
     try {
       const exportBg = getEffectiveCanvasBg(diagram.canvasColor, isDark);
       const url = await exportImage(viewport, fmt, diagramBounds(diagram.nodes), undefined, {
         backgroundColor: exportBg,
       });
       const ext = url.startsWith("data:image/svg") ? "svg" : fmt;
-      downloadDataUrl(url, `${diagram.name ?? "diagram"}.${ext}`);
+      const safeName = sanitizeFilename(diagram.name, "diagram");
+      downloadDataUrl(url, `${safeName}.${ext}`);
     } catch (err) {
       console.error("Export image failed:", err);
       alert("Failed to export diagram image. " + (err instanceof Error ? err.message : String(err)));

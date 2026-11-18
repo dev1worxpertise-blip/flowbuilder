@@ -3,7 +3,7 @@ import { useEditorStore } from "../../store/editorStore";
 import { useAuthStore } from "../../store/authStore";
 import { useThemeStore } from "../../store/themeStore";
 import { PATH_KINDS, CANVAS_COLOR_PRESETS } from "../../types";
-import { diagramToJson, diagramFromJson, downloadDataUrl } from "../../lib/exportDiagram";
+import { diagramToJson, diagramFromJson, downloadDataUrl, sanitizeFilename } from "../../lib/exportDiagram";
 import { UserMenu } from "../auth/UserMenu";
 import { ShortcutsHelpModal } from "./ShortcutsHelpModal";
 import { TemplateModal } from "../templates/TemplateModal";
@@ -839,7 +839,7 @@ export function Toolbar({
                   setShowExportMenu(false);
                   downloadDataUrl(
                     "data:application/json," + encodeURIComponent(diagramToJson(diagram)),
-                    `${diagram.name}.json`
+                    `${sanitizeFilename(diagram.name, "diagram")}.json`
                   );
                 }}
                 className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition text-left ${

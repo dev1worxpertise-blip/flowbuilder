@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { ReactFlowProvider } from "@xyflow/react";
+import { ReactFlowProvider, useReactFlow } from "@xyflow/react";
 import { useEditorStore } from "../../store/editorStore";
 import { useAuthStore } from "../../store/authStore";
 import { saveDiagram } from "../../db/library";
@@ -48,6 +48,7 @@ function EditorViewContent({ onBack, initialPresent = false }: { onBack: () => v
   const setShowInspector = useEditorStore((s) => s.setShowInspector);
   const theme = useThemeStore((s) => s.theme);
   const isDark = theme === "dark";
+  const { fitView } = useReactFlow();
 
   // Auto-reveal Inspector when user selects a node or edge
   useEffect(() => {
@@ -55,6 +56,14 @@ function EditorViewContent({ onBack, initialPresent = false }: { onBack: () => v
       setShowInspector(true);
     }
   }, [selection, setShowInspector]);
+
+  // Smoothly re-center canvas when sidebars are collapsed / expanded
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fitView({ duration: 350, padding: 0.18 });
+    }, 80);
+    return () => clearTimeout(timer);
+  }, [showPalette, showInspector, fitView]);
 
   // Store actions for shortcuts
   const undo = useEditorStore((s) => s.undo);
@@ -282,15 +291,14 @@ function EditorViewContent({ onBack, initialPresent = false }: { onBack: () => v
           <button
             type="button"
             onClick={togglePalette}
-            title="Show Component Library (Expand Panel)"
-            className={`absolute left-0 top-3 z-30 flex items-center gap-1.5 rounded-r-xl border border-l-0 px-3 py-2 text-xs font-bold shadow-2xl backdrop-blur transition-all hover:scale-105 cursor-pointer ${
+            title="Expand Component Library (Left Sidebar)"
+            className={`group absolute left-0 top-1/2 -translate-y-1/2 z-30 flex h-14 w-4.5 hover:w-6.5 items-center justify-center rounded-r-lg border border-l-0 shadow-lg backdrop-blur transition-all duration-150 cursor-pointer ${
               isDark
-                ? "border-[#232c3d] bg-[#0d111a]/95 text-slate-200 hover:text-white hover:border-[#c00000] ring-1 ring-white/5"
-                : "border-slate-300 bg-white/95 text-slate-700 hover:text-[#c00000] hover:border-[#c00000] shadow-md ring-1 ring-black/5"
+                ? "border-[#232c3d] bg-[#0d111a]/95 text-slate-400 hover:text-white hover:border-[#c00000] hover:bg-[#c00000]/10"
+                : "border-slate-300 bg-white/95 text-slate-500 hover:text-[#c00000] hover:border-[#c00000] hover:bg-[#c00000]/5"
             }`}
           >
-            <span className="text-sm">🧩</span>
-            <span className="text-[11px] font-bold tracking-tight">Library ▶</span>
+            <span className="text-xs font-black group-hover:scale-125 transition-transform">›</span>
           </button>
         )}
 
@@ -306,15 +314,14 @@ function EditorViewContent({ onBack, initialPresent = false }: { onBack: () => v
           <button
             type="button"
             onClick={toggleInspector}
-            title="Show Properties / Canvas Settings (Expand Panel)"
-            className={`absolute right-0 top-3 z-30 flex items-center gap-1.5 rounded-l-xl border border-r-0 px-3 py-2 text-xs font-bold shadow-2xl backdrop-blur transition-all hover:scale-105 cursor-pointer ${
+            title="Expand Properties / Canvas Settings (Right Sidebar)"
+            className={`group absolute right-0 top-1/2 -translate-y-1/2 z-30 flex h-14 w-4.5 hover:w-6.5 items-center justify-center rounded-l-lg border border-r-0 shadow-lg backdrop-blur transition-all duration-150 cursor-pointer ${
               isDark
-                ? "border-[#232c3d] bg-[#0d111a]/95 text-slate-200 hover:text-white hover:border-[#c00000] ring-1 ring-white/5"
-                : "border-slate-300 bg-white/95 text-slate-700 hover:text-[#c00000] hover:border-[#c00000] shadow-md ring-1 ring-black/5"
+                ? "border-[#232c3d] bg-[#0d111a]/95 text-slate-400 hover:text-white hover:border-[#c00000] hover:bg-[#c00000]/10"
+                : "border-slate-300 bg-white/95 text-slate-500 hover:text-[#c00000] hover:border-[#c00000] hover:bg-[#c00000]/5"
             }`}
           >
-            <span className="text-[11px] font-bold tracking-tight">◀ Properties</span>
-            <span className="text-sm">⚙️</span>
+            <span className="text-xs font-black group-hover:scale-125 transition-transform">‹</span>
           </button>
         )}
       </div>

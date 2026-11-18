@@ -126,7 +126,7 @@ export function Toolbar({
 
   return (
     <header
-      className={`flex w-full items-center justify-between gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 select-none shrink-0 border-b backdrop-blur-md transition-colors duration-150 ${
+      className={`relative z-40 flex w-full items-center justify-between gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 select-none shrink-0 border-b backdrop-blur-md transition-colors duration-150 ${
         isDark
           ? "border-[#232c3d] bg-[#0d111a]/95 text-slate-100"
           : "border-slate-200 bg-white/95 text-slate-800 shadow-xs"
@@ -716,25 +716,46 @@ export function Toolbar({
       <div className={`flex items-center gap-1 sm:gap-1.5 shrink-0 ml-auto pl-1.5 border-l ${
         isDark ? "border-[#232c3d]" : "border-slate-200"
       }`}>
-        {/* Unified 📸 Export Dropdown Menu */}
-        <div className="relative" ref={exportRef}>
+        {/* Unified 📸 Export Button & Quick Dropdown */}
+        <div className="relative inline-flex items-center rounded-lg border shadow-xs shrink-0" ref={exportRef}>
+          {/* Main Action: Click to Open Full Export Studio Modal directly */}
           <button
-            className={`rounded-lg border px-2 py-1 text-xs font-semibold transition flex items-center gap-1 shadow-xs shrink-0 ${
+            type="button"
+            onClick={() => {
+              setShowExportMenu(false);
+              if (onOpenExport) onOpenExport();
+            }}
+            className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold transition rounded-l-lg cursor-pointer ${
               isDark
-                ? "border-[#232c3d] bg-[#151b27] text-slate-200 hover:text-white hover:border-[#c00000]/70"
-                : "border-slate-200 bg-slate-50 text-slate-700 hover:text-slate-900 hover:border-slate-400"
+                ? "bg-[#151b27] text-slate-200 hover:text-white hover:bg-[#c00000]/25 hover:text-[#ff4040]"
+                : "bg-slate-50 text-slate-700 hover:text-[#c00000] hover:bg-[#c00000]/10"
             }`}
-            onClick={() => setShowExportMenu(!showExportMenu)}
-            title="Export Diagram as High-Res Poster, PDF Report, GIF, or JSON"
+            title="Open Export Studio (Poster, PDF, GIF, JSON)"
           >
             <span>📸</span>
-            <span className="hidden sm:inline">Export</span>
+            <span>Export</span>
+          </button>
+
+          {/* Dropdown Arrow: Click to toggle Quick Download Menu */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowExportMenu(!showExportMenu);
+            }}
+            className={`px-1.5 py-1 text-xs border-l transition rounded-r-lg cursor-pointer ${
+              isDark
+                ? "border-[#232c3d] bg-[#151b27] text-slate-300 hover:text-white hover:bg-slate-800"
+                : "border-slate-200 bg-slate-50 text-slate-700 hover:text-slate-900 hover:bg-slate-100"
+            }`}
+            title="Quick Download Options (PNG, SVG, PDF, GIF, JSON)"
+          >
             <span className="text-[9px] text-slate-400">▾</span>
           </button>
 
           {showExportMenu && (
             <div
-              className={`absolute right-0 top-full mt-1.5 w-56 rounded-xl border p-1.5 shadow-2xl backdrop-blur-md z-50 animate-in fade-in space-y-1 ${
+              className={`absolute right-0 top-full mt-1.5 w-60 rounded-xl border p-1.5 shadow-2xl backdrop-blur-md z-[100] animate-in fade-in space-y-1 ${
                 isDark
                   ? "border-[#232c3d] bg-[#0d111a] text-slate-200"
                   : "border-slate-200 bg-white text-slate-800"
@@ -742,11 +763,12 @@ export function Toolbar({
             >
               {onOpenExport && (
                 <button
+                  type="button"
                   onClick={() => {
                     setShowExportMenu(false);
                     onOpenExport();
                   }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold transition text-left ${
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold transition text-left cursor-pointer ${
                     isDark
                       ? "bg-[#c00000]/15 hover:bg-[#c00000]/25 border border-[#c00000]/40 text-[#ff4040]"
                       : "bg-[#c00000]/10 hover:bg-[#c00000]/15 border border-[#c00000]/30 text-[#c00000]"
@@ -773,11 +795,12 @@ export function Toolbar({
               </div>
 
               <button
+                type="button"
                 onClick={() => {
                   setShowExportMenu(false);
                   onExportImage("png");
                 }}
-                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition text-left ${
+                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition text-left cursor-pointer ${
                   isDark ? "text-slate-300 hover:bg-slate-800 hover:text-white" : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                 }`}
               >
@@ -785,11 +808,12 @@ export function Toolbar({
               </button>
 
               <button
+                type="button"
                 onClick={() => {
                   setShowExportMenu(false);
                   onExportImage("svg");
                 }}
-                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition text-left ${
+                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition text-left cursor-pointer ${
                   isDark ? "text-slate-300 hover:bg-slate-800 hover:text-white" : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                 }`}
               >
@@ -798,11 +822,12 @@ export function Toolbar({
 
               {onExportPdf && (
                 <button
+                  type="button"
                   onClick={() => {
                     setShowExportMenu(false);
                     onExportPdf();
                   }}
-                  className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition text-left ${
+                  className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition text-left cursor-pointer ${
                     isDark ? "text-slate-300 hover:bg-slate-800 hover:text-white" : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                   }`}
                 >
@@ -812,6 +837,7 @@ export function Toolbar({
 
               {onExportGif && (
                 <button
+                  type="button"
                   disabled={gifProgress !== null}
                   onClick={async () => {
                     setShowExportMenu(false);
@@ -824,7 +850,7 @@ export function Toolbar({
                       setGifProgress(null);
                     }
                   }}
-                  className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition text-left ${
+                  className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition text-left cursor-pointer ${
                     isDark ? "text-slate-300 hover:bg-slate-800 hover:text-white" : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                   }`}
                 >
@@ -835,6 +861,7 @@ export function Toolbar({
               <div className={`h-px my-1 ${isDark ? "bg-[#232c3d]" : "bg-slate-100"}`} />
 
               <button
+                type="button"
                 onClick={() => {
                   setShowExportMenu(false);
                   downloadDataUrl(
@@ -842,7 +869,7 @@ export function Toolbar({
                     `${sanitizeFilename(diagram.name, "diagram")}.json`
                   );
                 }}
-                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition text-left ${
+                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition text-left cursor-pointer ${
                   isDark ? "text-slate-300 hover:bg-slate-800 hover:text-white" : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                 }`}
               >
@@ -850,11 +877,12 @@ export function Toolbar({
               </button>
 
               <button
+                type="button"
                 onClick={() => {
                   setShowExportMenu(false);
                   fileRef.current?.click();
                 }}
-                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition text-left ${
+                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition text-left cursor-pointer ${
                   isDark ? "text-slate-300 hover:bg-slate-800 hover:text-white" : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                 }`}
               >

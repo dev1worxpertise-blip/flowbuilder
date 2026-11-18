@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import type { Diagram } from "../../types";
 import {
   exportPoster,
@@ -115,9 +116,9 @@ export function ExportModal({ diagram, isOpen, onClose, viewportElement }: Expor
     );
   };
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
@@ -466,6 +467,7 @@ export function ExportModal({ diagram, isOpen, onClose, viewportElement }: Expor
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

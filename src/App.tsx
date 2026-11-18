@@ -19,6 +19,7 @@ function getShareId(): string | null {
 export default function App() {
   const [shareId, setShareId] = useState<string | null>(getShareId());
   const [view, setView] = useState<"gallery" | "editor" | "share">(shareId ? "share" : "gallery");
+  const [initialPresent, setInitialPresent] = useState(false);
   const loadDiagram = useEditorStore((s) => s.loadDiagram);
   const initAuth = useAuthStore((s) => s.initAuth);
 
@@ -37,14 +38,16 @@ export default function App() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
-  const open = (d: Diagram) => {
+  const open = (d: Diagram, present = false) => {
     loadDiagram(d);
+    setInitialPresent(present);
     setView("editor");
   };
 
   const handleGoHome = () => {
     window.history.pushState({}, "", "/");
     setShareId(null);
+    setInitialPresent(false);
     setView("gallery");
   };
 
@@ -69,7 +72,13 @@ export default function App() {
           <Gallery onOpen={open} />
         </div>
       ) : (
-        <EditorView onBack={() => setView("gallery")} />
+        <EditorView
+          onBack={() => {
+            setInitialPresent(false);
+            setView("gallery");
+          }}
+          initialPresent={initialPresent}
+        />
       )}
       <AuthModal />
     </div>

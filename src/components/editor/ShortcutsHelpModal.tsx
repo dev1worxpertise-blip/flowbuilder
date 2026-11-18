@@ -2,6 +2,8 @@ import { createPortal } from "react-dom";
 
 export function ShortcutsHelpModal({ onClose }: { onClose: () => void }) {
   const shortcuts = [
+    { key: "P", desc: "Start Full-Screen Presentation Mode" },
+    { key: "F", desc: "Toggle Fullscreen Mode" },
     { key: "Ctrl + F", desc: "Find block on canvas (Spotlight Search)" },
     { key: "Ctrl + Z", desc: "Undo last change" },
     { key: "Ctrl + Y  /  Ctrl + Shift + Z", desc: "Redo change" },

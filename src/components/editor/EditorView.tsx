@@ -21,19 +21,19 @@ import { ExportModal } from "../export/ExportModal";
 import { NocModal } from "../noc/NocModal";
 import { useWebhookStore } from "../../store/webhookStore";
 
-export function EditorView({ onBack }: { onBack: () => void }) {
+export function EditorView({ onBack, initialPresent = false }: { onBack: () => void; initialPresent?: boolean }) {
   return (
     <ReactFlowProvider>
-      <EditorViewContent onBack={onBack} />
+      <EditorViewContent onBack={onBack} initialPresent={initialPresent} />
     </ReactFlowProvider>
   );
 }
 
-function EditorViewContent({ onBack }: { onBack: () => void }) {
+function EditorViewContent({ onBack, initialPresent = false }: { onBack: () => void; initialPresent?: boolean }) {
   const diagram = useEditorStore((s) => s.diagram);
   const user = useAuthStore((s) => s.user);
   const [selection, setSelection] = useState<Sel>(null);
-  const [present, setPresent] = useState(false);
+  const [present, setPresent] = useState(initialPresent);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>(user ? "saved" : "local");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
@@ -108,6 +108,24 @@ function EditorViewContent({ onBack }: { onBack: () => void }) {
       if (modifier && e.key.toLowerCase() === "f") {
         e.preventDefault();
         setIsSearchOpen(true);
+        return;
+      }
+
+      // Full-Screen Presentation Mode (P)
+      if (!modifier && !e.altKey && e.key.toLowerCase() === "p") {
+        e.preventDefault();
+        setPresent(true);
+        return;
+      }
+
+      // Toggle Browser Fullscreen (F)
+      if (!modifier && !e.altKey && e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen?.().catch(() => {});
+        } else {
+          document.exitFullscreen?.().catch(() => {});
+        }
         return;
       }
 

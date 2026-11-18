@@ -68,6 +68,21 @@ export function Toolbar({
   const [showCanvasColorMenu, setShowCanvasColorMenu] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [gifProgress, setGifProgress] = useState<number | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFs = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handleFs);
+    return () => document.removeEventListener("fullscreenchange", handleFs);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.().catch(() => {});
+    } else {
+      document.exitFullscreen?.().catch(() => {});
+    }
+  };
 
   const fileRef = useRef<HTMLInputElement>(null);
   const routingRef = useRef<HTMLDivElement>(null);
@@ -107,7 +122,7 @@ export function Toolbar({
 
   return (
     <header
-      className={`flex w-full items-center justify-between gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 select-none shrink-0 border-b backdrop-blur-md transition-colors duration-150 ${
+      className={`flex w-full items-center justify-between gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 select-none shrink-0 border-b backdrop-blur-md transition-colors duration-150 overflow-x-auto no-scrollbar ${
         isDark
           ? "border-[#232c3d] bg-[#0d111a]/95 text-slate-100"
           : "border-slate-200 bg-white/95 text-slate-800 shadow-xs"
@@ -238,7 +253,7 @@ export function Toolbar({
           title="Hierarchical Auto Layout (Left-to-Right)"
         >
           <span>⚡</span>
-          <span className="hidden xl:inline">Auto</span>
+          <span className="hidden 2xl:inline">Auto</span>
         </button>
 
         {/* Grid Snap Toggle */}
@@ -256,7 +271,7 @@ export function Toolbar({
           title={snapToGrid ? "Snap Grid is ON (20px)" : "Snap Grid is OFF"}
         >
           <span>🧲</span>
-          <span className="hidden xl:inline">Grid</span>
+          <span className="hidden 2xl:inline">Grid</span>
         </button>
 
         {/* MiniMap / Radar Toggle */}
@@ -274,7 +289,7 @@ export function Toolbar({
           title={showMiniMap ? "Radar MiniMap is ON" : "Radar MiniMap is OFF"}
         >
           <span>🗺️</span>
-          <span className="hidden xl:inline">Radar</span>
+          <span className="hidden 2xl:inline">Radar</span>
         </button>
 
         {/* Connector Routing Style Dropdown */}
@@ -289,7 +304,7 @@ export function Toolbar({
             title="Connector Routing Style"
           >
             <span className="text-[#c00000] font-mono">{currentRoutingMeta.icon}</span>
-            <span className="hidden xl:inline">{currentRoutingMeta.label}</span>
+            <span className="hidden 2xl:inline">{currentRoutingMeta.label}</span>
             <span className="text-[9px] text-slate-400">▾</span>
           </button>
 
@@ -372,7 +387,7 @@ export function Toolbar({
               className="w-3.5 h-3.5 rounded-full border border-slate-400/40 shadow-xs shrink-0"
               style={{ backgroundColor: diagram.canvasColor || (isDark ? "#0a0d15" : "#f8fafc") }}
             />
-            <span className="hidden xl:inline">Canvas</span>
+            <span className="hidden 2xl:inline">Canvas</span>
             <span className="text-[9px] text-slate-400">▾</span>
           </button>
 
@@ -524,7 +539,7 @@ export function Toolbar({
           title="AI Workflow Generator (Generate from text)"
         >
           <span className="text-xs">✨</span>
-          <span className="text-xs font-bold hidden sm:inline">AI Flow</span>
+          <span className="text-xs font-bold hidden 2xl:inline">AI Flow</span>
         </button>
 
         {/* Templates */}
@@ -619,7 +634,7 @@ export function Toolbar({
               <span className="text-xs">
                 {nocSummary.down > 0 ? "🚨" : nocSummary.warning > 0 ? "⚠️" : nocSummary.healthy > 0 ? "🛡️" : "⚡"}
               </span>
-              <span className="font-bold hidden sm:inline">
+              <span className="font-bold hidden 2xl:inline">
                 {nocSummary.down > 0
                   ? `${nocSummary.down} Down`
                   : nocSummary.warning > 0
@@ -646,7 +661,7 @@ export function Toolbar({
           title="Import FlowBuilder diagram JSON from file"
         >
           <span>📂</span>
-          <span className="hidden sm:inline">Import JSON</span>
+          <span className="hidden 2xl:inline">Import</span>
         </button>
 
         {/* Unified 📸 Export Dropdown Menu */}
@@ -661,7 +676,7 @@ export function Toolbar({
             title="Export Diagram as High-Res Poster, PDF Report, GIF, or JSON"
           >
             <span>📸</span>
-            <span className="hidden xl:inline">Export</span>
+            <span className="hidden 2xl:inline">Export</span>
             <span className="text-[9px] text-slate-400">▾</span>
           </button>
 
@@ -822,17 +837,33 @@ export function Toolbar({
           title="Generate public shareable link"
         >
           <span>🔗</span>
-          <span className="hidden xl:inline">Share</span>
+          <span className="hidden 2xl:inline">Share</span>
         </button>
 
         {/* Present Hero Button (Worxpertise Red #c00000) */}
         <button
           className="rounded-lg bg-[#c00000] hover:bg-[#a50000] active:scale-95 px-2.5 py-1 text-xs font-bold text-white shadow-sm transition flex items-center gap-1 shrink-0"
           onClick={onPresent}
-          title="Full-Screen Presentation Mode"
+          title="Full-Screen Presentation Mode (Hotkey: P)"
         >
           <span>▶</span>
           <span>Present</span>
+        </button>
+
+        {/* Fullscreen Mode Toggle */}
+        <button
+          onClick={toggleFullscreen}
+          className={`rounded-lg px-2 py-1 text-xs font-semibold border transition flex items-center gap-1 shrink-0 ${
+            isFullscreen
+              ? "bg-slate-700 border-slate-500 text-white"
+              : isDark
+              ? "border-[#232c3d] bg-[#151b27] text-slate-300 hover:text-white hover:border-slate-500"
+              : "border-slate-200 bg-slate-50 text-slate-700 hover:text-slate-900 hover:border-slate-400"
+          }`}
+          title={isFullscreen ? "Exit Fullscreen (Hotkey: F)" : "Enter Fullscreen (Hotkey: F)"}
+        >
+          <span>{isFullscreen ? "🗗" : "⛶"}</span>
+          <span className="hidden 2xl:inline">{isFullscreen ? "Exit" : "Full"}</span>
         </button>
 
         {/* Global Theme Toggle (Worxpertise Light vs Dark) */}

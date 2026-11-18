@@ -11,7 +11,7 @@ import { UserMenu } from "../auth/UserMenu";
 import { AdminDashboard } from "../admin/AdminDashboard";
 import { TemplateModal } from "../templates/TemplateModal";
 
-export function Gallery({ onOpen }: { onOpen: (d: Diagram) => void }) {
+export function Gallery({ onOpen }: { onOpen: (d: Diagram, present?: boolean) => void }) {
   const [items, setItems] = useState<Diagram[]>([]);
   const [isCloud, setIsCloud] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -143,17 +143,17 @@ export function Gallery({ onOpen }: { onOpen: (d: Diagram) => void }) {
     await refresh();
   };
 
-  const handleOpenDiagram = async (diagram: Diagram) => {
+  const handleOpenDiagram = async (diagram: Diagram, present = false) => {
     if (user && isCloud) {
       try {
         const fullDiagram = await diagramsApi.get(diagram.id);
-        onOpen(fullDiagram);
+        onOpen(fullDiagram, present);
         return;
       } catch (err) {
         console.warn("Could not load full cloud diagram, using cached version:", err);
       }
     }
-    onOpen(diagram);
+    onOpen(diagram, present);
   };
 
   // Filter & sort diagrams
@@ -681,6 +681,19 @@ export function Gallery({ onOpen }: { onOpen: (d: Diagram) => void }) {
                     >
                       <span>Open Flow</span>
                       <span className="text-[10px]">→</span>
+                    </button>
+
+                    <button
+                      className={`rounded-xl px-2.5 py-2 text-xs font-bold border transition flex items-center gap-1 shrink-0 ${
+                        isLight
+                          ? "border-slate-200 bg-slate-50 text-slate-700 hover:border-[#c00000] hover:text-[#c00000] hover:bg-white"
+                          : "border-slate-700 bg-slate-800 text-slate-200 hover:border-[#c00000] hover:text-white"
+                      }`}
+                      onClick={() => handleOpenDiagram(d, true)}
+                      title={`Present "${d.name}" in Full-Screen Presentation Mode`}
+                    >
+                      <span>▶</span>
+                      <span className="hidden sm:inline">Present</span>
                     </button>
 
                     {isConfirmingDelete ? (

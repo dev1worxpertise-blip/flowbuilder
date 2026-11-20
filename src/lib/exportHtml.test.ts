@@ -59,6 +59,12 @@ describe("exportInteractiveHtml", () => {
     expect(html).toContain("function focusNode(nodeId");
     expect(html).toContain("function startSimulation()");
     expect(html).toContain("function animateTraffic(");
+    expect(html).toContain("function playTelecomRing()");
+    expect(html).toContain("function playConnectChime()");
+    expect(html).toContain("function speakStep(");
+    expect(html).toContain("id=\"btn-sfx\"");
+    expect(html).toContain("id=\"btn-voice\"");
+    expect(html).toContain("id=\"voice-wave\"");
   });
 
   it("wraps long multi-line subtitles within card boundaries using foreignObject word-break", () => {

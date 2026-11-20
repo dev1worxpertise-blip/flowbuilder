@@ -3,6 +3,8 @@ import { createPortal } from "react-dom";
 import { useReactFlow } from "@xyflow/react";
 import { useSimulationStore } from "../../store/simulationStore";
 import { useEditorStore } from "../../store/editorStore";
+import { useAudioStore } from "../../store/audioStore";
+import { AudioControls } from "./AudioControls";
 
 export function SimulationDock() {
   const diagram = useEditorStore((s) => s.diagram);
@@ -40,6 +42,28 @@ export function SimulationDock() {
   };
 
   const timerRef = useRef<number | null>(null);
+
+  // Audio SFX & Voice Narration
+  const playStepSound = useAudioStore((s) => s.playStepSound);
+  const narrateStep = useAudioStore((s) => s.narrateStep);
+  const stopAllAudio = useAudioStore((s) => s.stopAllAudio);
+
+  // Play contextual sound effect & AI voice narration on step change
+  useEffect(() => {
+    if (!isActive || !currentNodeId || !diagram) return;
+    const node = diagram.nodes.find((n) => n.id === currentNodeId);
+    if (node) {
+      playStepSound(node.data.title, node.type);
+      narrateStep(node.data.title, node.data.subtitle);
+    }
+  }, [isActive, currentNodeId, diagram, playStepSound, narrateStep]);
+
+  // Stop speech when paused, completed or inactive
+  useEffect(() => {
+    if (!isActive || status === "paused" || status === "completed") {
+      stopAllAudio();
+    }
+  }, [isActive, status, stopAllAudio]);
 
   // Auto-pan canvas to focus the current active node
   useEffect(() => {
@@ -205,6 +229,11 @@ export function SimulationDock() {
               {s}x
             </button>
           ))}
+        </div>
+
+        {/* Audio SFX & Voice Narration Controls */}
+        <div className="border-l border-gray-800 pl-2.5">
+          <AudioControls compact />
         </div>
 
         {/* Fullscreen Toggle Button */}

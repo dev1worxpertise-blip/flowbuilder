@@ -598,6 +598,23 @@ export function exportInteractiveHtml(
     .btn-primary:hover { background: #a00000; color: #fff; }
     .btn-active { background: #10b981 !important; color: #fff !important; border-color: #34d399 !important; }
 
+    /* AUDIO WAVEFORM BARS */
+    .audio-bars {
+      display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; margin-left: 2px;
+    }
+    .audio-bar {
+      width: 2.5px; height: 100%; background: #ffffff; border-radius: 1px;
+      animation: soundWave 0.7s ease-in-out infinite alternate;
+    }
+    .audio-bar:nth-child(1) { animation-delay: 0.1s; height: 35%; }
+    .audio-bar:nth-child(2) { animation-delay: 0.3s; height: 80%; }
+    .audio-bar:nth-child(3) { animation-delay: 0.05s; height: 100%; }
+    .audio-bar:nth-child(4) { animation-delay: 0.25s; height: 50%; }
+    @keyframes soundWave {
+      0% { transform: scaleY(0.3); }
+      100% { transform: scaleY(1); }
+    }
+
     /* VIEWPORT CANVAS */
     #canvas-container {
       position: absolute; top: 54px; left: 0; right: 0; bottom: 0;
@@ -722,6 +739,22 @@ export function exportInteractiveHtml(
       <!-- Traffic Button -->
       <button class="btn" id="btn-traffic" title="Toggle Live Flowing Particles">
         <span>📡</span> <span>Traffic</span>
+      </button>
+
+      <!-- Telecom SFX Button -->
+      <button class="btn btn-active" id="btn-sfx" title="Toggle Telecom & Architecture Sound Effects">
+        <span id="sfx-icon">🔊</span> <span>SFX</span>
+      </button>
+
+      <!-- AI Voice Narration Button -->
+      <button class="btn" id="btn-voice" title="Toggle AI Voice Bot Narration">
+        <span id="voice-icon">🎙️</span> <span>Voice</span>
+        <span class="audio-bars" id="voice-wave" style="display: none;">
+          <span class="audio-bar"></span>
+          <span class="audio-bar"></span>
+          <span class="audio-bar"></span>
+          <span class="audio-bar"></span>
+        </span>
       </button>
 
       <!-- Theme Switcher -->
@@ -1038,6 +1071,8 @@ export function exportInteractiveHtml(
         }
 
         focusNode(step.nodeId, 450);
+        playStepSound(step.title, step.kind);
+        speakStep(step.title, step.subtitle);
       }
 
       function nextStep() {
@@ -1079,6 +1114,7 @@ export function exportInteractiveHtml(
         isAutoPlaying = false;
         clearInterval(autoTimer);
         btnAuto.textContent = "▶ Auto";
+        stopAllAudio();
         simHud.style.display = "none";
         activeRing.style.display = "none";
         document.getElementById("btn-simulate").classList.remove("btn-active");
@@ -1220,6 +1256,8 @@ export function exportInteractiveHtml(
           if (id) {
             focusNode(id, 300);
             openInspector(id);
+            const n = nodeMap.get(id);
+            if (n) playStepSound(n.title, n.kind);
           }
         });
       });
@@ -1242,6 +1280,177 @@ export function exportInteractiveHtml(
       };
 
       document.getElementById("btn-print").onclick = () => window.print();
+
+      // 7. WEB AUDIO API & AI VOICE BOT NARRATION
+      let audioCtx = null;
+      let sfxEnabled = true;
+      let voiceEnabled = false;
+
+      function getAudioContext() {
+        if (!audioCtx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) audioCtx = new AudioContextClass();
+        }
+        if (audioCtx && audioCtx.state === "suspended") {
+          audioCtx.resume().catch(() => {});
+        }
+        return audioCtx;
+      }
+
+      function playTelecomRing() {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        [440, 480].forEach(freq => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(freq, now);
+          gain.gain.setValueAtTime(0.08, now);
+          gain.gain.setValueAtTime(0.08, now + 0.35);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.52);
+        });
+      }
+
+      function playConnectChime() {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+        notes.forEach((freq, i) => {
+          const t = now + i * 0.08;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(freq, t);
+          gain.gain.setValueAtTime(0.12, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(t);
+          osc.stop(t + 0.3);
+        });
+      }
+
+      function playAiProcessPulse() {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.16);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.24);
+      }
+
+      function playDecisionTap() {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(700, now);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.09);
+      }
+
+      function playAgentHandoff() {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        [880, 1174.66].forEach((freq, idx) => {
+          const t = now + idx * 0.12;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(freq, t);
+          gain.gain.setValueAtTime(0.12, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(t);
+          osc.stop(t + 0.38);
+        });
+      }
+
+      function playStepSound(title, kind) {
+        if (!sfxEnabled) return;
+        const t = (title || "").toLowerCase();
+        const k = (kind || "").toLowerCase();
+        if (t.includes("initiat") || t.includes("call") || t.includes("dialer") || t.includes("asterisk")) {
+          playTelecomRing();
+        } else if (t.includes("sip") || t.includes("livekit") || t.includes("session") || t.includes("connect")) {
+          playConnectChime();
+        } else if (t.includes("stt") || t.includes("llm") || t.includes("tts") || t.includes("speech") || t.includes("transcription")) {
+          playAiProcessPulse();
+        } else if (k === "decision" || t.includes("decision") || t.includes("check") || t.includes("tool required")) {
+          playDecisionTap();
+        } else if (t.includes("human") || t.includes("agent") || t.includes("transfer") || t.includes("handoff")) {
+          playAgentHandoff();
+        } else {
+          playConnectChime();
+        }
+      }
+
+      function speakStep(title, subtitle) {
+        if (!voiceEnabled || !window.speechSynthesis) return;
+        try {
+          window.speechSynthesis.cancel();
+          const fullText = (title + ". " + (subtitle || "")).trim();
+          if (!fullText) return;
+          const utterance = new SpeechSynthesisUtterance(fullText);
+          utterance.rate = 1.05;
+          utterance.pitch = 1.0;
+          const waveEl = document.getElementById("voice-wave");
+          utterance.onstart = () => { if (waveEl) waveEl.style.display = "inline-flex"; };
+          utterance.onend = () => { if (waveEl) waveEl.style.display = "none"; };
+          utterance.onerror = () => { if (waveEl) waveEl.style.display = "none"; };
+          window.speechSynthesis.speak(utterance);
+        } catch (e) {}
+      }
+
+      function stopAllAudio() {
+        if (window.speechSynthesis) {
+          try { window.speechSynthesis.cancel(); } catch (e) {}
+        }
+        const waveEl = document.getElementById("voice-wave");
+        if (waveEl) waveEl.style.display = "none";
+      }
+
+      document.getElementById("btn-sfx").onclick = () => {
+        sfxEnabled = !sfxEnabled;
+        const btn = document.getElementById("btn-sfx");
+        const icon = document.getElementById("sfx-icon");
+        btn.classList.toggle("btn-active", sfxEnabled);
+        icon.textContent = sfxEnabled ? "🔊" : "🔇";
+        if (sfxEnabled) playConnectChime();
+      };
+
+      document.getElementById("btn-voice").onclick = () => {
+        voiceEnabled = !voiceEnabled;
+        const btn = document.getElementById("btn-voice");
+        btn.classList.toggle("btn-active", voiceEnabled);
+        if (!voiceEnabled) {
+          stopAllAudio();
+        } else {
+          speakStep("Voice narration enabled", "Worxpertise AI Voice Bot platform");
+        }
+      };
 
       // Keyboard navigation
       window.addEventListener("keydown", (e) => {

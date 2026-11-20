@@ -16,6 +16,8 @@ import { buildGuidedTour, type TourStep } from "../../lib/guidedTour";
 import { nodeTypes } from "../nodes";
 import { edgeTypes } from "../edges";
 import { SimulationDock } from "../simulation/SimulationDock";
+import { AudioControls } from "../simulation/AudioControls";
+import { useAudioStore } from "../../store/audioStore";
 import { useSimulationStore } from "../../store/simulationStore";
 import { HEALTH_STATUS_CONFIG, type NodeHealthStatus } from "../../types";
 
@@ -118,6 +120,11 @@ function PresentContent({ onExit }: { onExit: () => void }) {
   const startSimulation = useSimulationStore((s) => s.startSimulation);
   const stopSimulation = useSimulationStore((s) => s.stopSimulation);
 
+  // Audio SFX & Voice Narration
+  const playStepSound = useAudioStore((s) => s.playStepSound);
+  const narrateStep = useAudioStore((s) => s.narrateStep);
+  const stopAllAudio = useAudioStore((s) => s.stopAllAudio);
+
   // Generate guided sequence
   const steps: TourStep[] = useMemo(() => {
     if (!diagram) return [];
@@ -125,6 +132,21 @@ function PresentContent({ onExit }: { onExit: () => void }) {
   }, [diagram]);
 
   const currentStep = steps[stepIndex];
+
+  // Play contextual sound and voice narration when tour step changes (when not in simulation mode)
+  useEffect(() => {
+    if (tourActive && currentStep && !isSimulating) {
+      playStepSound(currentStep.node.data.title, currentStep.node.type);
+      narrateStep(currentStep.node.data.title, currentStep.node.data.subtitle);
+    }
+  }, [stepIndex, tourActive, currentStep, isSimulating, playStepSound, narrateStep]);
+
+  // Stop audio on unmount or when guided tour / present exits
+  useEffect(() => {
+    return () => {
+      stopAllAudio();
+    };
+  }, [stopAllAudio]);
 
   // Camera framing on step with clear, readable focus
   const frameCurrentStep = useCallback((step: TourStep) => {
@@ -457,6 +479,9 @@ function PresentContent({ onExit }: { onExit: () => void }) {
           >
             <span>{isDark ? "☀️" : "🌙"}</span>
           </button>
+
+          {/* Interactive Audio SFX & AI Voice Narration Controls */}
+          <AudioControls compact />
 
           <button
             className={`rounded-lg border px-2.5 sm:px-3 py-1.5 text-xs font-semibold transition flex items-center gap-1 ${

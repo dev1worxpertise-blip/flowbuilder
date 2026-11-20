@@ -61,6 +61,32 @@ describe("exportInteractiveHtml", () => {
     expect(html).toContain("function animateTraffic(");
   });
 
+  it("wraps long multi-line subtitles within card boundaries using foreignObject word-break", () => {
+    const diagram = createEmptyDiagram("Security Architecture");
+    const node: FlowNode = {
+      id: "sec_1",
+      type: "card",
+      position: { x: 50, y: 50 },
+      data: {
+        title: "SECURITY & INTEGRATION",
+        subtitle:
+          "External provider communication uses HTTPS. API requests and webhook delivery are logged. PostgreSQL stores application data, transcripts, metrics and recording files safely in private storage.",
+        accent: "amber",
+        width: 240,
+        height: 160,
+        glow: true,
+      },
+    };
+    diagram.nodes.push(node);
+
+    const html = exportInteractiveHtml(diagram);
+    expect(html).toContain("foreignObject");
+    expect(html).toContain("word-break: break-word");
+    expect(html).toContain("overflow-wrap: break-word");
+    expect(html).toContain("SECURITY &amp; INTEGRATION");
+    expect(html).toContain("External provider communication uses HTTPS.");
+  });
+
   it("handles empty diagrams gracefully without crashing", () => {
     const emptyDiagram = createEmptyDiagram("Empty");
     const html = exportInteractiveHtml(emptyDiagram);

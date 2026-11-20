@@ -29,6 +29,68 @@ const ACCENT_COLORS: Record<Accent, { border: string; bg: string; glow: string; 
   purple: { border: "#a855f7", bg: "#581c87", glow: "rgba(168,85,247,0.3)", text: "#e9d5ff" },
 };
 
+/** Sticky Note styles matching NoteNode.tsx */
+const NOTE_STYLES: Record<
+  Accent,
+  {
+    bg: string;
+    border: string;
+    tape: string;
+    title: string;
+    body: string;
+  }
+> = {
+  amber: {
+    bg: "rgba(43, 33, 14, 0.96)",
+    border: "#d97706",
+    tape: "rgba(245, 158, 11, 0.35)",
+    title: "#fbbf24",
+    body: "#fef3c7",
+  },
+  pink: {
+    bg: "rgba(46, 16, 30, 0.96)",
+    border: "#db2777",
+    tape: "rgba(236, 72, 153, 0.35)",
+    title: "#f472b6",
+    body: "#fce7f3",
+  },
+  blue: {
+    bg: "rgba(14, 32, 54, 0.96)",
+    border: "#0284c7",
+    tape: "rgba(56, 189, 248, 0.35)",
+    title: "#38bdf8",
+    body: "#e0f2fe",
+  },
+  green: {
+    bg: "rgba(12, 40, 28, 0.96)",
+    border: "#059669",
+    tape: "rgba(52, 211, 153, 0.35)",
+    title: "#34d399",
+    body: "#d1fae5",
+  },
+  neutral: {
+    bg: "rgba(24, 25, 32, 0.96)",
+    border: "#858591",
+    tape: "rgba(133, 133, 145, 0.35)",
+    title: "#c0c0c8",
+    body: "#f1f1f5",
+  },
+  crimson: {
+    bg: "rgba(40, 10, 12, 0.96)",
+    border: "#c00000",
+    tape: "rgba(192, 0, 0, 0.35)",
+    title: "#ff4040",
+    body: "#ffbfbf",
+  },
+  purple: {
+    bg: "rgba(38, 14, 52, 0.96)",
+    border: "#9744cc",
+    tape: "rgba(151, 68, 204, 0.35)",
+    title: "#c084fc",
+    body: "#f3e8ff",
+  },
+};
+
 /** Health status color configurations */
 const HEALTH_CONFIG: Record<NodeHealthStatus, { label: string; color: string; dot: string; bg: string }> = {
   healthy: { label: "Healthy", color: "#34d399", dot: "#10b981", bg: "rgba(6,78,59,0.7)" },
@@ -142,7 +204,7 @@ function renderNodeSvg(
   if (kind === "group") {
     const isDashed = n.data?.borderStyle === "dashed";
     const dashAttr = isDashed ? 'stroke-dasharray="8 6"' : "";
-    const strokeColor = isDark ? "#c00000" : "#c00000";
+    const strokeColor = "#c00000";
     body = `
       <g class="node-element group-container" data-id="${n.id}">
         <rect x="0" y="0" width="${w}" height="${h}" rx="12"
@@ -156,16 +218,49 @@ function renderNodeSvg(
         ${subtitle ? `<text x="${w - 14}" y="21" text-anchor="end" font-size="10" fill="${isDark ? "#94a3b8" : "#64748b"}">${subtitle}</text>` : ""}
       </g>
     `;
+  } else if (kind === "note") {
+    const noteStyle = NOTE_STYLES[accent] || NOTE_STYLES.amber;
+    body = `
+      <g class="node-element note-node cursor-pointer" data-id="${n.id}">
+        <foreignObject x="0" y="0" width="${w}" height="${h}" style="overflow: visible;">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="
+            width: ${w}px;
+            height: ${h}px;
+            box-sizing: border-box;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: ${noteStyle.bg};
+            border: 1.5px solid ${noteStyle.border};
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+          ">
+            <div style="position: absolute; -top: 2px; left: 50%; transform: translateX(-50%); width: 56px; height: 12px; background: ${noteStyle.tape}; border-radius: 2px; border: 1px solid rgba(255,255,255,0.15);"></div>
+            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 6px; margin-bottom: 6px;">
+              <span style="font-weight: 700; font-size: 12px; color: ${noteStyle.title}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${title}</span>
+              <span style="font-size: 11px; opacity: 0.8;">📌</span>
+            </div>
+            <div style="font-size: 11px; line-height: 1.45; color: ${noteStyle.body}; word-break: break-word; overflow-wrap: break-word; white-space: pre-wrap; overflow-y: auto; flex: 1;">
+              ${subtitle}
+            </div>
+          </div>
+        </foreignObject>
+      </g>
+    `;
   } else if (kind === "decision") {
     body = `
       <g class="node-element decision-node cursor-pointer" data-id="${n.id}">
         <polygon points="${w / 2},5 ${w - 5},${h / 2} ${w / 2},${h - 5} 5,${h / 2}"
           fill="${isDark ? "#1a160d" : "#fffbeb"}"
           stroke="#f59e0b" stroke-width="2.5" />
-        <text x="${w / 2}" y="${h / 2 - 3}" text-anchor="middle" font-size="12" font-weight="700" fill="${isDark ? "#fef3c7" : "#78350f"}">
-          ${title}
-        </text>
-        ${subtitle ? `<text x="${w / 2}" y="${h / 2 + 13}" text-anchor="middle" font-size="9.5" fill="${isDark ? "#fde68a" : "#b45309"}">${subtitle}</text>` : ""}
+        <foreignObject x="${w * 0.15}" y="${h * 0.15}" width="${w * 0.7}" height="${h * 0.7}">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; word-break: break-word; overflow-wrap: break-word; font-weight: 700; font-size: 11.5px; color: ${isDark ? "#fef3c7" : "#78350f"}; line-height: 1.25; padding: 2px;">
+            <div>${title}</div>
+            ${subtitle ? `<div style="font-size: 9.5px; font-weight: 400; opacity: 0.85; margin-top: 2px;">${subtitle}</div>` : ""}
+          </div>
+        </foreignObject>
       </g>
     `;
   } else if (kind === "pill") {
@@ -175,9 +270,11 @@ function renderNodeSvg(
         <rect x="5" y="5" width="${w - 10}" height="${h - 10}" rx="${rx}"
           fill="${isDark ? "#062e24" : "#ecfdf5"}"
           stroke="#10b981" stroke-width="2.2" />
-        <text x="${w / 2}" y="${h / 2 + 4.5}" text-anchor="middle" font-size="12" font-weight="700" fill="${isDark ? "#6ee7b7" : "#065f46"}">
-          ${title}
-        </text>
+        <foreignObject x="10" y="5" width="${w - 20}" height="${h - 10}">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; text-align: center; font-weight: 700; font-size: 12px; color: ${isDark ? "#6ee7b7" : "#065f46"}; word-break: break-word;">
+            ${title}
+          </div>
+        </foreignObject>
       </g>
     `;
   } else if (kind === "database") {
@@ -191,60 +288,69 @@ function renderNodeSvg(
           fill="${isDark ? "#17182e" : "#eff6ff"}" stroke="#6366f1" stroke-width="2" />
         <ellipse cx="${w / 2}" cy="${top}" rx="${rx}" ry="${ry}"
           fill="${isDark ? "#23264c" : "#dbeafe"}" stroke="#6366f1" stroke-width="2" />
-        <text x="${w / 2}" y="${h / 2 + 4}" text-anchor="middle" font-size="12" font-weight="700" fill="${isDark ? "#c7d2fe" : "#1e1b4b"}">
-          ${title}
-        </text>
-        ${subtitle ? `<text x="${w / 2}" y="${h / 2 + 18}" text-anchor="middle" font-size="9.5" fill="${isDark ? "#94a3b8" : "#4338ca"}">${subtitle}</text>` : ""}
+        <foreignObject x="12" y="${top + 4}" width="${w - 24}" height="${bot - top}">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; word-break: break-word; overflow-wrap: break-word; font-weight: 700; font-size: 12px; color: ${isDark ? "#c7d2fe" : "#1e1b4b"}; line-height: 1.25;">
+            <div>${title}</div>
+            ${subtitle ? `<div style="font-size: 9.5px; font-weight: 400; opacity: 0.85; margin-top: 2px;">${subtitle}</div>` : ""}
+          </div>
+        </foreignObject>
       </g>
     `;
   } else {
-    // Default: Card / Process Node
-    const cardBg = isDark ? "#101623" : "#ffffff";
-    const cardBorder = isDark ? "#232c3d" : "#e2e8f0";
-    const textFill = isDark ? "#f8fafc" : "#0f172a";
-    const subFill = isDark ? "#94a3b8" : "#64748b";
-    const titleX = icon ? 44 : 14;
-
+    // Default: Card / Process Node with guaranteed word-wrapping so text NEVER extends outside block
     body = `
       <g class="node-element card-node cursor-pointer" data-id="${n.id}">
-        <!-- Base card rect with subtle drop shadow -->
-        <rect x="0" y="0" width="${w}" height="${h}" rx="10"
-          fill="${cardBg}" stroke="${cardBorder}" stroke-width="1.6" filter="url(#node-shadow)" />
+        <foreignObject x="0" y="0" width="${w}" height="${h}" style="overflow: visible;">
+          <div xmlns="http://www.w3.org/1999/xhtml" class="card-box" style="
+            width: ${w}px;
+            height: ${h}px;
+            box-sizing: border-box;
+            padding: 10px 14px;
+            border-radius: 12px;
+            background: var(--card-bg);
+            border: 1.6px solid var(--border-color);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+          ">
+            <!-- Accent stripe on top -->
+            <div style="position: absolute; top: 0; left: 10px; right: 10px; height: 3.5px; background: ${acc.border}; border-radius: 2px;"></div>
 
-        <!-- Accent stripe on top -->
-        <path d="M 10,0 L ${w - 10},0" stroke="${acc.border}" stroke-width="3.5" stroke-linecap="round" />
+            <!-- Header Row: Title, Icon & Health Badge -->
+            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-top: 2px;">
+              <div style="display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1;">
+                ${icon ? `<span style="font-size: 18px; line-height: 1; flex-shrink: 0;">${icon}</span>` : ""}
+                <div style="font-weight: 700; font-size: 12.5px; color: var(--text); line-height: 1.3; word-break: break-word;">
+                  ${title}
+                </div>
+              </div>
+              ${healthCfg ? `
+                <div style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border-radius: 9999px; background: ${healthCfg.bg}; flex-shrink: 0;">
+                  <span style="width: 6px; height: 6px; border-radius: 50%; background: ${healthCfg.dot}; display: inline-block;"></span>
+                  <span style="font-size: 9.5px; font-weight: 700; color: ${healthCfg.color};">${healthCfg.label}</span>
+                </div>
+              ` : ""}
+            </div>
 
-        <!-- Icon if present -->
-        ${icon ? `<text x="14" y="${h * 0.5 + 6}" font-size="20">${icon}</text>` : ""}
+            <!-- Subtitle with word-wrap: break-word so it NEVER overflows horizontally -->
+            ${subtitle ? `
+              <div style="font-size: 10.5px; line-height: 1.45; color: var(--text-muted); word-break: break-word; overflow-wrap: break-word; white-space: normal; margin-top: 6px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical;">
+                ${subtitle}
+              </div>
+            ` : ""}
 
-        <!-- Title -->
-        <text x="${titleX}" y="${icon ? 30 : 28}" font-size="12.5" font-weight="700" fill="${textFill}">
-          ${title}
-        </text>
-
-        <!-- Subtitle -->
-        ${subtitle ? `
-          <text x="${titleX}" y="${icon ? 48 : 46}" font-size="10.5" fill="${subFill}">
-            ${subtitle}
-          </text>
-        ` : ""}
-
-        <!-- Metric pill at bottom-left if present -->
-        ${metric ? `
-          <g transform="translate(14, ${h - 22})">
-            <rect width="64" height="15" rx="4" fill="${isDark ? "rgba(14,165,233,0.15)" : "rgba(14,165,233,0.1)"}" stroke="${isDark ? "rgba(14,165,233,0.3)" : "rgba(14,165,233,0.4)"}" stroke-width="1" />
-            <text x="32" y="11" text-anchor="middle" font-size="9" font-family="monospace" font-weight="600" fill="#38bdf8">${metric}</text>
-          </g>
-        ` : ""}
-
-        <!-- Health badge at top-right if present -->
-        ${healthCfg ? `
-          <g transform="translate(${w - 74}, 8)">
-            <rect width="64" height="18" rx="9" fill="${healthCfg.bg}" />
-            <circle cx="9" cy="9" r="3.5" fill="${healthCfg.dot}" />
-            <text x="17" y="12.5" font-size="9.5" font-weight="700" fill="${healthCfg.color}">${healthCfg.label}</text>
-          </g>
-        ` : ""}
+            <!-- Metric pill at bottom if present -->
+            ${metric ? `
+              <div style="margin-top: auto; padding-top: 4px;">
+                <span style="font-family: monospace; font-size: 9px; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: rgba(14,165,233,0.15); border: 1px solid rgba(14,165,233,0.3); color: #38bdf8;">
+                  ${metric}
+                </span>
+              </div>
+            ` : ""}
+          </div>
+        </foreignObject>
       </g>
     `;
   }

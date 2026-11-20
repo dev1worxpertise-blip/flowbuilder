@@ -5,6 +5,8 @@ import { useSimulationStore } from "../../store/simulationStore";
 import { useEditorStore } from "../../store/editorStore";
 import { useAudioStore } from "../../store/audioStore";
 import { AudioControls } from "./AudioControls";
+import { useTranscriptStore } from "../../store/transcriptStore";
+import { LiveCallTranscript } from "./LiveCallTranscript";
 
 export function SimulationDock() {
   const diagram = useEditorStore((s) => s.diagram);
@@ -48,6 +50,11 @@ export function SimulationDock() {
   const narrateStep = useAudioStore((s) => s.narrateStep);
   const stopAllAudio = useAudioStore((s) => s.stopAllAudio);
 
+  // Customer Journey Transcript
+  const processTranscriptStep = useTranscriptStore((s) => s.processNodeStep);
+  const isTranscriptOpen = useTranscriptStore((s) => s.isOpen);
+  const toggleTranscript = useTranscriptStore((s) => s.toggleOpen);
+
   // Play contextual sound effect & AI voice narration on step change
   useEffect(() => {
     if (!isActive || !currentNodeId || !diagram) return;
@@ -55,8 +62,9 @@ export function SimulationDock() {
     if (node) {
       playStepSound(node.data.title, node.type);
       narrateStep(node.data.title, node.data.subtitle);
+      processTranscriptStep(node.data.title, node.data.subtitle);
     }
-  }, [isActive, currentNodeId, diagram, playStepSound, narrateStep]);
+  }, [isActive, currentNodeId, diagram, playStepSound, narrateStep, processTranscriptStep]);
 
   // Stop speech when paused, completed or inactive
   useEffect(() => {
@@ -236,6 +244,22 @@ export function SimulationDock() {
           <AudioControls compact />
         </div>
 
+        {/* Live Call Transcript Toggle */}
+        <div className="border-l border-gray-800 pl-2">
+          <button
+            onClick={toggleTranscript}
+            className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold transition ${
+              isTranscriptOpen
+                ? "bg-[#c00000] text-white shadow-sm"
+                : "text-gray-300 hover:bg-gray-800 hover:text-white"
+            }`}
+            title="Toggle Live Call Transcript & Customer Journey Simulator"
+          >
+            <span>💬</span>
+            <span className="hidden sm:inline">Call Log</span>
+          </button>
+        </div>
+
         {/* Fullscreen Toggle Button */}
         <div className="border-l border-gray-800 pl-2">
           <button
@@ -262,6 +286,9 @@ export function SimulationDock() {
           </button>
         </div>
       </div>
+
+      {/* Floating Live Call Transcript & Customer Journey Simulator */}
+      <LiveCallTranscript />
     </div>
   </>
 );

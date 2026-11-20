@@ -18,6 +18,8 @@ import { edgeTypes } from "../edges";
 import { SimulationDock } from "../simulation/SimulationDock";
 import { AudioControls } from "../simulation/AudioControls";
 import { useAudioStore } from "../../store/audioStore";
+import { useTranscriptStore } from "../../store/transcriptStore";
+import { LiveCallTranscript } from "../simulation/LiveCallTranscript";
 import { useSimulationStore } from "../../store/simulationStore";
 import { HEALTH_STATUS_CONFIG, type NodeHealthStatus } from "../../types";
 
@@ -125,6 +127,11 @@ function PresentContent({ onExit }: { onExit: () => void }) {
   const narrateStep = useAudioStore((s) => s.narrateStep);
   const stopAllAudio = useAudioStore((s) => s.stopAllAudio);
 
+  // Customer Journey Transcript
+  const processTranscriptStep = useTranscriptStore((s) => s.processNodeStep);
+  const isTranscriptOpen = useTranscriptStore((s) => s.isOpen);
+  const toggleTranscript = useTranscriptStore((s) => s.toggleOpen);
+
   // Generate guided sequence
   const steps: TourStep[] = useMemo(() => {
     if (!diagram) return [];
@@ -138,8 +145,9 @@ function PresentContent({ onExit }: { onExit: () => void }) {
     if (tourActive && currentStep && !isSimulating) {
       playStepSound(currentStep.node.data.title, currentStep.node.type);
       narrateStep(currentStep.node.data.title, currentStep.node.data.subtitle);
+      processTranscriptStep(currentStep.node.data.title, currentStep.node.data.subtitle);
     }
-  }, [stepIndex, tourActive, currentStep, isSimulating, playStepSound, narrateStep]);
+  }, [stepIndex, tourActive, currentStep, isSimulating, playStepSound, narrateStep, processTranscriptStep]);
 
   // Stop audio on unmount or when guided tour / present exits
   useEffect(() => {
@@ -483,6 +491,22 @@ function PresentContent({ onExit }: { onExit: () => void }) {
           {/* Interactive Audio SFX & AI Voice Narration Controls */}
           <AudioControls compact />
 
+          {/* Customer Journey Live Call Transcript Toggle */}
+          <button
+            onClick={toggleTranscript}
+            className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold border transition flex items-center gap-1.5 ${
+              isTranscriptOpen
+                ? "bg-[#c00000] border-[#ff4040] text-white shadow-xs"
+                : isDark
+                ? "border-[#232c3d] bg-[#151b27] text-slate-300 hover:border-slate-500"
+                : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 shadow-xs"
+            }`}
+            title="Toggle Live Call Transcript & Customer Journey Simulator"
+          >
+            <span>💬</span>
+            <span className="hidden sm:inline">Call Log</span>
+          </button>
+
           <button
             className={`rounded-lg border px-2.5 sm:px-3 py-1.5 text-xs font-semibold transition flex items-center gap-1 ${
               isDark
@@ -752,6 +776,9 @@ function PresentContent({ onExit }: { onExit: () => void }) {
             )}
           </div>
         )}
+
+        {/* Live Call Transcript Simulator Widget */}
+        <LiveCallTranscript />
       </div>
     </div>
   );

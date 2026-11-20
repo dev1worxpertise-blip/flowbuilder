@@ -144,6 +144,7 @@ export interface FlowNode {
   id: string;
   type: NodeKind;
   position: { x: number; y: number };
+  parentId?: string;
   data: NodeData;
 }
 

@@ -3,7 +3,7 @@ import { useEditorStore } from "../../store/editorStore";
 import { useAuthStore } from "../../store/authStore";
 import { useThemeStore } from "../../store/themeStore";
 import { PATH_KINDS, CANVAS_COLOR_PRESETS } from "../../types";
-import { diagramToJson, diagramFromJson, downloadDataUrl, sanitizeFilename } from "../../lib/exportDiagram";
+import { diagramToJson, diagramFromJson, downloadDataUrl, sanitizeFilename, downloadInteractiveHtml } from "../../lib/exportDiagram";
 import { UserMenu } from "../auth/UserMenu";
 import { ShortcutsHelpModal } from "./ShortcutsHelpModal";
 import { TemplateModal } from "../templates/TemplateModal";
@@ -857,6 +857,19 @@ export function Toolbar({
                   <span>🎞️</span> Quick Looping GIF
                 </button>
               )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowExportMenu(false);
+                  downloadInteractiveHtml(diagram, { isDark });
+                }}
+                className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition text-left cursor-pointer ${
+                  isDark ? "text-[#ff6b6b] hover:bg-[#c00000]/20 hover:text-white" : "text-[#c00000] hover:bg-[#c00000]/10"
+                }`}
+              >
+                <span>🌐</span> Quick Interactive HTML
+              </button>
 
               <div className={`h-px my-1 ${isDark ? "bg-[#232c3d]" : "bg-slate-100"}`} />
 

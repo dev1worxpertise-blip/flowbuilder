@@ -2,6 +2,7 @@ import { toPng, toSvg } from "html-to-image";
 import jsPDF from "jspdf";
 import { GIFEncoder, quantize, applyPalette } from "gifenc";
 import type { Diagram, FlowNode, FlowEdge } from "../types";
+export { exportInteractiveHtml, downloadInteractiveHtml, type ExportHtmlOptions } from "./exportHtml";
 
 /**
  * Sanitize a filename to remove illegal Windows/Linux characters (\ / : * ? " < > |).

@@ -9,6 +9,7 @@ import {
   downloadDataUrl,
   diagramBounds,
   sanitizeFilename,
+  downloadInteractiveHtml,
 } from "../../lib/exportDiagram";
 import { useThemeStore } from "../../store/themeStore";
 import { getEffectiveCanvasBg } from "../../lib/theme";
@@ -20,7 +21,7 @@ export interface ExportModalProps {
   viewportElement: HTMLElement | null;
 }
 
-type ExportTab = "poster" | "pdf" | "gif" | "json";
+type ExportTab = "poster" | "pdf" | "html" | "gif" | "json";
 
 export function ExportModal({ diagram, isOpen, onClose, viewportElement }: ExportModalProps) {
   const [activeTab, setActiveTab] = useState<ExportTab>("poster");
@@ -167,6 +168,19 @@ export function ExportModal({ diagram, isOpen, onClose, viewportElement }: Expor
             }`}
           >
             <span>📄</span> PDF Document
+          </button>
+          <button
+            onClick={() => setActiveTab("html")}
+            className={`flex items-center gap-1.5 py-3 text-xs font-semibold border-b-2 transition mr-5 ${
+              activeTab === "html"
+                ? "border-[#c00000] text-[#ff4040]"
+                : "border-transparent text-gray-400 hover:text-gray-200"
+            }`}
+          >
+            <span>🌐</span> Standalone HTML
+            <span className="rounded-full bg-[#c00000]/20 border border-[#c00000]/40 px-1.5 py-0.2 text-[9px] font-extrabold text-[#ff4040]">
+              INTERACTIVE
+            </span>
           </button>
           <button
             onClick={() => setActiveTab("gif")}
@@ -404,7 +418,67 @@ export function ExportModal({ diagram, isOpen, onClose, viewportElement }: Expor
             </div>
           )}
 
-          {/* TAB 3: Animated GIF */}
+          {/* TAB 3: Standalone Offline Interactive HTML */}
+          {activeTab === "html" && (
+            <div className="space-y-4">
+              <div className="rounded-xl border border-[#c00000]/40 bg-[#c00000]/10 p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="text-xs font-bold text-[#ff6b6b] flex items-center gap-1.5">
+                    <span>🌐</span> Single-File Standalone Interactive Architecture
+                  </div>
+                  <span className="rounded-full bg-emerald-950/60 border border-emerald-500/50 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
+                    100% Offline • Zero Dependencies
+                  </span>
+                </div>
+                <p className="text-[11px] text-gray-300 leading-relaxed">
+                  Downloads a self-contained <strong className="text-white">.html</strong> file that anyone can open in any browser (Chrome, Edge, Safari, Firefox) simply by double-clicking it. No server, node runtime, or internet connection required!
+                </p>
+              </div>
+
+              {/* Feature Checklist */}
+              <div className="rounded-xl border border-gray-800 bg-gray-900/40 p-4 space-y-2 text-xs">
+                <div className="font-semibold text-gray-200">
+                  Interactive Features Included in Single-File HTML:
+                </div>
+                <ul className="space-y-1.5 text-gray-400 text-[11px]">
+                  <li className="flex items-center gap-2">
+                    <span className="text-emerald-400">✓</span>
+                    <span><strong className="text-gray-200">Full Pan, Zoom & MiniMap:</strong> Mouse drag, wheel zoom, touch gestures, and radar minimap.</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-emerald-400">✓</span>
+                    <span><strong className="text-gray-200">Guided Walkthrough & Step-by-Step Simulation:</strong> Next/Prev steps, auto-play, branch selection, and camera auto-focus.</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-emerald-400">✓</span>
+                    <span><strong className="text-emerald-400">Live Traffic Animation:</strong> Glowing animated packets flowing across pipeline connectors.</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-emerald-400">✓</span>
+                    <span><strong className="text-gray-200">Component Inspector Drawer:</strong> Click any block to view SLA health status, latency metrics, and connection topologies.</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="text-emerald-400">✓</span>
+                    <span><strong className="text-gray-200">Spotlight Search & Themes:</strong> Instant block search with camera jump, plus Dark/Light mode toggle.</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Download HTML Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  downloadInteractiveHtml(diagram, { isDark, canvasColor: defaultBg });
+                }}
+                className="w-full rounded-xl bg-[#c00000] hover:bg-[#a00000] py-3 text-sm font-bold text-white shadow-lg shadow-[#c00000]/30 transition flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>🌐</span>
+                <span>Download Standalone Interactive HTML</span>
+              </button>
+            </div>
+          )}
+
+          {/* TAB 4: Animated GIF */}
           {activeTab === "gif" && (
             <div className="space-y-4">
               <div className="rounded-xl border border-gray-800 bg-gray-900/40 p-4 space-y-2">

@@ -39,6 +39,22 @@ describe("ExportModal", () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it("allows switching to Standalone HTML tab and displays download button", () => {
+    render(
+      <ExportModal
+        diagram={dummyDiagram}
+        isOpen={true}
+        onClose={vi.fn()}
+        viewportElement={null}
+      />
+    );
+
+    // Switch to Standalone HTML tab
+    fireEvent.click(screen.getByText(/Standalone HTML/i));
+    expect(screen.getByText(/Single-File Standalone Interactive Architecture/i)).toBeInTheDocument();
+    expect(screen.getByText(/Download Standalone Interactive HTML/i)).toBeInTheDocument();
+  });
+
   it("allows switching to PDF Document tab and selecting Multi-Page Report", () => {
     render(
       <ExportModal

@@ -338,14 +338,15 @@ function PresentContent({ onExit }: { onExit: () => void }) {
       style={{ backgroundColor: canvasBg }}
     >
       {/* Top Header Bar - Worxpertise Corporate Brand */}
-      <div className={`relative z-20 flex items-center justify-between border-b px-4 sm:px-6 py-2.5 backdrop-blur-md transition-colors duration-150 ${
+      <div className={`relative z-20 flex w-full items-center justify-between gap-1.5 sm:gap-2.5 border-b px-2.5 sm:px-4 py-2 backdrop-blur-md transition-colors duration-150 ${
         isDark
           ? "border-[#232c3d] bg-[#0d111a]/95 text-slate-100 shadow-sm"
           : "border-slate-200 bg-white/95 text-slate-800 shadow-xs"
       }`}>
-        <div className="flex items-center gap-3">
+        {/* Left: Brand & Diagram Title (Flex with min-w-0 to allow graceful truncation) */}
+        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 max-w-[220px] md:max-w-xs lg:max-w-sm xl:max-w-md shrink">
           {/* Worxpertise Logo Badge */}
-          <div className="bg-white p-1 px-1.5 rounded-xl border border-slate-200 shadow-xs flex items-center shrink-0">
+          <div className="bg-white p-1 px-1.5 rounded-lg border border-slate-200 shadow-xs flex items-center shrink-0">
             <img
               src="https://worxpertise.com/wp-content/themes/worxpertise/assets/images/worx-header-logo.png"
               alt="Worxpertise Logo"
@@ -358,27 +359,27 @@ function PresentContent({ onExit }: { onExit: () => void }) {
               }}
             />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className={`text-sm sm:text-base font-extrabold leading-tight ${isDark ? "text-white" : "text-slate-900"}`}>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <h1 className={`text-xs sm:text-sm font-extrabold leading-tight truncate ${isDark ? "text-white" : "text-slate-900"}`} title={diagram.name}>
                 {diagram.name}
               </h1>
-              <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold border shrink-0 ${
+              <span className={`hidden md:inline-flex rounded-full px-2 py-0.5 text-[9px] font-bold border shrink-0 ${
                 isDark
                   ? "bg-[#c00000]/15 border-[#c00000]/40 text-[#ff4040]"
                   : "bg-rose-50 border-rose-200/80 text-[#c00000]"
               }`}>
-                Presentation Mode
+                Present
               </span>
             </div>
-            <p className={`text-[10px] sm:text-[11px] truncate max-w-sm sm:max-w-md ${isDark ? "text-slate-400" : "text-slate-500"}`}>
-              Worxpertise Flow Studio — Interactive Architecture Walkthrough & Live Simulation
+            <p className={`hidden xl:block text-[10px] truncate ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+              Worxpertise Flow Studio — Interactive Architecture Walkthrough
             </p>
           </div>
         </div>
 
         {/* Central Mode Switcher */}
-        <div className={`flex items-center gap-1 rounded-xl border p-1 transition ${
+        <div className={`flex items-center gap-0.5 sm:gap-1 rounded-xl border p-0.5 sm:p-1 shrink-0 transition ${
           isDark ? "border-[#232c3d] bg-[#111827]/80" : "border-slate-200 bg-slate-100/90 shadow-inner"
         }`}>
           <button
@@ -387,16 +388,17 @@ function PresentContent({ onExit }: { onExit: () => void }) {
               setTourActive(true);
               if (currentStep) frameCurrentStep(currentStep);
             }}
-            className={`rounded-lg px-3 py-1 text-xs font-bold transition flex items-center gap-1 ${
+            className={`rounded-lg px-2 sm:px-2.5 py-1 text-xs font-bold transition flex items-center gap-1 ${
               tourActive && !isSimulating
                 ? "bg-[#c00000] text-white shadow-sm"
                 : isDark
                 ? "text-slate-400 hover:text-white"
                 : "text-slate-600 hover:text-slate-900"
             }`}
+            title="Guided Tour Walkthrough"
           >
             <span>🎯</span>
-            <span>Guided Tour</span>
+            <span className="hidden sm:inline">Guided Tour</span>
           </button>
           <button
             onClick={() => {
@@ -407,16 +409,17 @@ function PresentContent({ onExit }: { onExit: () => void }) {
                 startSimulation(diagram.nodes, diagram.edges);
               }
             }}
-            className={`rounded-lg px-3 py-1 text-xs font-bold transition flex items-center gap-1 ${
+            className={`rounded-lg px-2 sm:px-2.5 py-1 text-xs font-bold transition flex items-center gap-1 ${
               isSimulating
                 ? "bg-[#c00000] text-white shadow-sm"
                 : isDark
                 ? "text-slate-400 hover:text-white"
                 : "text-slate-600 hover:text-slate-900"
             }`}
+            title="Live Packet Flow Simulation"
           >
             <span>{isSimulating ? "⏹" : "▶"}</span>
-            <span>Simulate</span>
+            <span className="hidden sm:inline">Simulate</span>
           </button>
           <button
             onClick={() => {
@@ -424,26 +427,27 @@ function PresentContent({ onExit }: { onExit: () => void }) {
               setTourActive(false);
               fitView({ padding: 0.22, maxZoom: 1.0, duration: 350 });
             }}
-            className={`rounded-lg px-3 py-1 text-xs font-bold transition flex items-center gap-1 ${
+            className={`rounded-lg px-2 sm:px-2.5 py-1 text-xs font-bold transition flex items-center gap-1 ${
               !tourActive && !isSimulating
                 ? "bg-[#c00000] text-white shadow-sm"
                 : isDark
                 ? "text-slate-400 hover:text-white"
                 : "text-slate-600 hover:text-slate-900"
             }`}
+            title="Free Pan & Zoom Exploration"
           >
             <span>🗺️</span>
-            <span>Free Explore</span>
+            <span className="hidden sm:inline">Free Explore</span>
           </button>
         </div>
 
-        {/* Right Controls */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* Right Controls - ALWAYS PINNED, SHRINK-0, AND NEVER CUT OFF */}
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-auto">
           {/* Flow Speed Toggles */}
-          <div className={`flex items-center rounded-lg border px-1 py-0.5 text-xs ${
+          <div className={`hidden lg:flex items-center rounded-lg border px-1 py-0.5 text-xs ${
             isDark ? "border-[#232c3d] bg-[#151b27] text-slate-400" : "border-slate-200 bg-white text-slate-700 shadow-xs"
           }`}>
-            <span className="text-[10px] px-1 font-semibold text-slate-400">Flow:</span>
+            <span className="text-[10px] px-1 font-semibold text-slate-400 hidden xl:inline">Flow:</span>
             {[1, 2, 3].map((spd) => (
               <button
                 key={spd}
@@ -461,19 +465,23 @@ function PresentContent({ onExit }: { onExit: () => void }) {
             ))}
           </div>
 
+          {/* Pause / Resume Flows */}
           <button
-            className={`rounded-lg border px-2.5 sm:px-3 py-1.5 text-xs font-semibold transition ${
+            className={`rounded-lg border px-2 sm:px-2.5 py-1 text-xs font-semibold transition flex items-center gap-1 shrink-0 ${
               isDark
                 ? "border-[#232c3d] bg-[#151b27] text-slate-200 hover:border-slate-500"
                 : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 shadow-xs"
             }`}
             onClick={() => setPlaying((p) => !p)}
+            title={playing ? "Pause animation flows" : "Resume animation flows"}
           >
-            {playing ? "⏸ Pause Flows" : "▶ Resume Flows"}
+            <span>{playing ? "⏸" : "▶"}</span>
+            <span className="hidden md:inline">{playing ? "Pause" : "Resume"}</span>
           </button>
 
+          {/* Reset Walkthrough */}
           <button
-            className={`rounded-lg border px-2.5 sm:px-3 py-1.5 text-xs font-semibold transition ${
+            className={`rounded-lg border px-2 sm:px-2.5 py-1 text-xs font-semibold transition shrink-0 ${
               isDark
                 ? "border-[#232c3d] bg-[#151b27] text-slate-200 hover:border-slate-500"
                 : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 shadow-xs"
@@ -492,7 +500,7 @@ function PresentContent({ onExit }: { onExit: () => void }) {
           {/* Theme Toggle (Worxpertise Light vs Dark) */}
           <button
             onClick={toggleTheme}
-            className={`rounded-lg px-2 sm:px-2.5 py-1.5 text-xs font-semibold border transition flex items-center gap-1 ${
+            className={`rounded-lg px-2 py-1 text-xs font-semibold border transition flex items-center gap-1 shrink-0 ${
               isDark
                 ? "border-[#232c3d] bg-[#151b27] text-amber-300 hover:border-amber-400"
                 : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 shadow-xs"
@@ -503,12 +511,14 @@ function PresentContent({ onExit }: { onExit: () => void }) {
           </button>
 
           {/* Interactive Audio SFX & AI Voice Narration Controls */}
-          <AudioControls compact dropdownDirection="down" />
+          <div className="shrink-0 flex items-center">
+            <AudioControls compact dropdownDirection="down" />
+          </div>
 
           {/* Customer Journey Live Call CX Simulator Toggle */}
           <button
             onClick={toggleTranscript}
-            className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold border transition flex items-center gap-1.5 ${
+            className={`rounded-lg px-2 sm:px-2.5 py-1 text-xs font-semibold border transition flex items-center gap-1 shrink-0 ${
               isTranscriptOpen
                 ? "bg-[#c00000] border-[#ff4040] text-white shadow-xs"
                 : isDark
@@ -518,11 +528,12 @@ function PresentContent({ onExit }: { onExit: () => void }) {
             title="Customer Call Experience (CX) — View live caller & AI bot conversation"
           >
             <span>🎧</span>
-            <span className="hidden sm:inline">Call CX</span>
+            <span className="hidden xl:inline">Call CX</span>
           </button>
 
+          {/* Fullscreen Toggle */}
           <button
-            className={`rounded-lg border px-2.5 sm:px-3 py-1.5 text-xs font-semibold transition flex items-center gap-1 ${
+            className={`rounded-lg border px-2 sm:px-2.5 py-1 text-xs font-semibold transition flex items-center gap-1 shrink-0 ${
               isDark
                 ? "border-[#232c3d] bg-[#151b27] text-slate-200 hover:border-slate-500"
                 : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 shadow-xs"
@@ -531,19 +542,17 @@ function PresentContent({ onExit }: { onExit: () => void }) {
             title="Toggle Fullscreen (F)"
           >
             <span>{isFullscreen ? "🗗" : "⛶"}</span>
-            <span className="hidden md:inline">{isFullscreen ? "Windowed" : "Fullscreen"}</span>
+            <span className="hidden 2xl:inline">{isFullscreen ? "Window" : "Full"}</span>
           </button>
 
+          {/* Exit Presentation Mode - PROMINENT, PINNED & SHRINK-0 (ALWAYS 100% VISIBLE) */}
           <button
-            className={`rounded-lg px-3.5 py-1.5 text-xs font-bold border transition shadow-xs ${
-              isDark
-                ? "bg-rose-950/40 border-rose-900/60 text-rose-300 hover:bg-[#c00000] hover:text-white"
-                : "bg-rose-50 border-rose-200 text-[#c00000] hover:bg-[#c00000] hover:text-white"
-            }`}
+            className="rounded-lg bg-[#c00000] hover:bg-[#a00000] active:scale-95 px-3 py-1 text-xs font-bold text-white shadow-md shadow-[#c00000]/30 transition flex items-center gap-1 shrink-0 cursor-pointer"
             onClick={handleExit}
             title="Exit Presentation Mode (Esc)"
           >
-            Exit
+            <span>✕</span>
+            <span>Exit</span>
           </button>
         </div>
       </div>

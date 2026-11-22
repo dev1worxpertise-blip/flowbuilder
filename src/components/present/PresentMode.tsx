@@ -503,7 +503,7 @@ function PresentContent({ onExit }: { onExit: () => void }) {
           </button>
 
           {/* Interactive Audio SFX & AI Voice Narration Controls */}
-          <AudioControls compact />
+          <AudioControls compact dropdownDirection="down" />
 
           {/* Customer Journey Live Call CX Simulator Toggle */}
           <button
@@ -788,8 +788,8 @@ function PresentContent({ onExit }: { onExit: () => void }) {
           </div>
         )}
 
-        {/* Live Call Transcript Simulator Widget (only when not simulating, as SimulationDock already renders it) */}
-        {!isSimulating && <LiveCallTranscript />}
+        {/* Live Call Transcript Simulator Widget */}
+        <LiveCallTranscript />
       </div>
     </div>
   );

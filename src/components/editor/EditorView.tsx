@@ -20,6 +20,7 @@ import { PresentMode } from "../present/PresentMode";
 import { NodeSearchModal } from "./NodeSearchModal";
 import { ExportModal } from "../export/ExportModal";
 import { NocModal } from "../noc/NocModal";
+import { LiveCallTranscript } from "../simulation/LiveCallTranscript";
 import { useWebhookStore } from "../../store/webhookStore";
 import { useThemeStore } from "../../store/themeStore";
 import { getEffectiveCanvasBg } from "../../lib/theme";
@@ -368,6 +369,9 @@ function EditorViewContent({ onBack, initialPresent = false }: { onBack: () => v
           viewportElement={canvasRef.current?.querySelector<HTMLElement>(".react-flow__viewport") || (typeof document !== "undefined" ? document.querySelector<HTMLElement>(".react-flow__viewport") : null)}
         />
       )}
+
+      {/* Floating Live Customer Call CX Simulator Widget on Main Canvas */}
+      <LiveCallTranscript />
     </div>
   );
 }

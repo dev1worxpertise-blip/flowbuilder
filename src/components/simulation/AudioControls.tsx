@@ -21,7 +21,13 @@ export function AudioWaveform() {
   );
 }
 
-export function AudioControls({ compact = false }: { compact?: boolean }) {
+export function AudioControls({
+  compact = false,
+  dropdownDirection = "down",
+}: {
+  compact?: boolean;
+  dropdownDirection?: "up" | "down";
+}) {
   const {
     isSfxEnabled,
     isVoiceEnabled,
@@ -111,7 +117,11 @@ export function AudioControls({ compact = false }: { compact?: boolean }) {
 
       {/* Sound Settings Popover */}
       {showSettings && (
-        <div className="absolute right-0 bottom-full mb-2 w-72 rounded-2xl border border-gray-800 bg-[#0d121f]/98 p-4 shadow-2xl backdrop-blur-xl ring-1 ring-white/10 z-[100] text-gray-100 animate-in fade-in zoom-in-95 duration-150">
+        <div
+          className={`absolute right-0 ${
+            dropdownDirection === "up" ? "bottom-full mb-2" : "top-full mt-2"
+          } w-72 rounded-2xl border border-gray-800 bg-[#0d121f]/98 p-4 shadow-2xl backdrop-blur-xl ring-1 ring-white/10 z-[100] text-gray-100 animate-in fade-in zoom-in-95 duration-150`}
+        >
           <div className="flex items-center justify-between border-b border-gray-800/80 pb-2 mb-3">
             <div className="flex items-center gap-1.5">
               <span className="text-sm">🎛️</span>

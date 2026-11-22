@@ -6,7 +6,6 @@ import { useEditorStore } from "../../store/editorStore";
 import { useAudioStore } from "../../store/audioStore";
 import { AudioControls } from "./AudioControls";
 import { useTranscriptStore } from "../../store/transcriptStore";
-import { LiveCallTranscript } from "./LiveCallTranscript";
 
 export function SimulationDock() {
   const diagram = useEditorStore((s) => s.diagram);
@@ -246,7 +245,7 @@ export function SimulationDock() {
 
         {/* Audio SFX & Voice Narration Controls */}
         <div className="border-l border-gray-800 pl-2.5">
-          <AudioControls compact />
+          <AudioControls compact dropdownDirection="up" />
         </div>
 
         {/* Customer Call CX Simulator Toggle */}
@@ -291,9 +290,6 @@ export function SimulationDock() {
           </button>
         </div>
       </div>
-
-      {/* Floating Live Call Transcript & Customer Journey Simulator */}
-      <LiveCallTranscript />
     </div>
   </>
 );

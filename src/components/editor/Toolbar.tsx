@@ -12,6 +12,8 @@ import { AiFlowModal } from "./AiFlowModal";
 import { useSimulationStore } from "../../store/simulationStore";
 import { useTrafficStore } from "../../store/trafficStore";
 import { useWebhookStore } from "../../store/webhookStore";
+import { AudioControls } from "../simulation/AudioControls";
+import { useTranscriptStore } from "../../store/transcriptStore";
 
 export type SyncStatus = "saved" | "saving" | "error" | "local";
 
@@ -121,6 +123,9 @@ export function Toolbar({
 
   const isNocConnected = useWebhookStore((s) => s.isConnected);
   const nocSummary = useWebhookStore((s) => s.getNocSummary());
+
+  const isTranscriptOpen = useTranscriptStore((s) => s.isOpen);
+  const toggleTranscript = useTranscriptStore((s) => s.toggleOpen);
 
   if (!diagram) return null;
 
@@ -665,6 +670,28 @@ export function Toolbar({
               )}
             </button>
           )}
+
+          {/* Interactive Audio SFX & Voice Controls */}
+          <div className={`border-l pl-1 sm:pl-1.5 flex items-center ${isDark ? "border-[#232c3d]" : "border-slate-200"}`}>
+            <AudioControls compact dropdownDirection="down" />
+          </div>
+
+          {/* Customer Journey Live Call CX Simulator Toggle */}
+          <button
+            type="button"
+            onClick={toggleTranscript}
+            className={`rounded-lg px-2 py-1 text-xs font-semibold border transition flex items-center gap-1.5 shrink-0 ${
+              isTranscriptOpen
+                ? "bg-[#c00000] border-[#ff4040] text-white shadow-xs"
+                : isDark
+                ? "border-[#232c3d] bg-[#151b27] text-slate-300 hover:border-slate-500"
+                : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 shadow-xs"
+            }`}
+            title="Customer Call Experience (CX) — Live Caller & AI Bot Dialogue Simulator"
+          >
+            <span>🎧</span>
+            <span className="hidden xl:inline">Call CX</span>
+          </button>
         </div>
 
         {/* Standalone Import JSON Button */}

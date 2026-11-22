@@ -6,6 +6,10 @@ import { ACCENTS, PATH_KINDS, HEALTH_STATUS_CONFIG, CANVAS_COLOR_PRESETS, type N
 import { POPULAR_ICONS } from "../../lib/iconLibrary";
 import { IconPickerModal } from "./IconPickerModal";
 import { useWebhookStore, getWebhookEndpointUrl, generateCurlSnippet } from "../../store/webhookStore";
+import { useAudioStore } from "../../store/audioStore";
+import { useTranscriptStore } from "../../store/transcriptStore";
+import { CALL_SCENARIOS } from "../../data/callScenarios";
+import { type SoundTheme } from "../../lib/audioEngine";
 
 export type Sel =
   | { kind: "node" | "edge"; id: string }
@@ -43,6 +47,26 @@ export function Inspector({ selection, onClearSelection }: { selection: Sel; onC
   const runSyntheticProbe = useWebhookStore((s) => s.runSyntheticProbe);
   const theme = useThemeStore((s) => s.theme);
   const isDark = theme === "dark";
+
+  // Audio SFX & Voice Narration Store
+  const isSfxEnabled = useAudioStore((s) => s.isSfxEnabled);
+  const toggleSfx = useAudioStore((s) => s.toggleSfx);
+  const isVoiceEnabled = useAudioStore((s) => s.isVoiceEnabled);
+  const toggleVoice = useAudioStore((s) => s.toggleVoice);
+  const sfxTheme = useAudioStore((s) => s.sfxTheme);
+  const setSfxTheme = useAudioStore((s) => s.setSfxTheme);
+  const sfxVolume = useAudioStore((s) => s.sfxVolume);
+  const setSfxVolume = useAudioStore((s) => s.setSfxVolume);
+  const playStepSound = useAudioStore((s) => s.playStepSound);
+
+  // Customer Journey Call CX Simulator Store
+  const isTranscriptOpen = useTranscriptStore((s) => s.isOpen);
+  const setIsTranscriptOpen = useTranscriptStore((s) => s.setIsOpen);
+  const selectedScenarioId = useTranscriptStore((s) => s.selectedScenarioId);
+  const setScenario = useTranscriptStore((s) => s.setScenario);
+  const setTranscriptViewMode = useTranscriptStore((s) => s.setViewMode);
+  const resetScenarioToDefault = useTranscriptStore((s) => s.resetScenarioToDefault);
+  const getActiveScenario = useTranscriptStore((s) => s.getActiveScenario);
 
   const quickIcons = useMemo(() => {
     if (!iconSearch.trim()) {
@@ -334,6 +358,196 @@ export function Inspector({ selection, onClearSelection }: { selection: Sel; onC
             </div>
           </div>
         )}
+
+        {/* 4. Audio & Customer Call CX Simulation Settings */}
+        <div className={`pt-3 border-t space-y-3 ${isDark ? "border-gray-800" : "border-slate-200"}`}>
+          <div className="flex items-center justify-between">
+            <span className={`font-semibold flex items-center gap-1.5 ${isDark ? "text-gray-200" : "text-slate-800"}`}>
+              <span>🎧</span> Audio & Call CX
+            </span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded border border-[#c00000]/40 bg-[#c00000]/10 text-[#ff5555] font-bold">
+              Simulator
+            </span>
+          </div>
+          <p className={`text-[11px] leading-tight ${isDark ? "text-gray-400" : "text-slate-500"}`}>
+            Configure telecom SFX tones, AI voice narration, and live caller customer journey.
+          </p>
+
+          {/* SFX & Voice Toggles */}
+          <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-1.5">
+              <button
+                type="button"
+                onClick={toggleSfx}
+                className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition ${
+                  isSfxEnabled
+                    ? isDark
+                      ? "bg-emerald-950/40 border-emerald-500/60 text-emerald-300"
+                      : "bg-emerald-50 border-emerald-300 text-emerald-800"
+                    : isDark
+                    ? "bg-gray-900 border-gray-800 text-gray-400"
+                    : "bg-slate-50 border-slate-200 text-slate-500"
+                }`}
+                title="Toggle SFX sound effects during animation"
+              >
+                <span className="flex items-center gap-1">
+                  <span>{isSfxEnabled ? "🔊" : "🔇"}</span>
+                  <span>SFX Tones</span>
+                </span>
+                <span className="text-[10px] font-bold">{isSfxEnabled ? "ON" : "OFF"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={toggleVoice}
+                className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition ${
+                  isVoiceEnabled
+                    ? isDark
+                      ? "bg-[#c00000]/20 border-[#c00000]/60 text-[#ffbfbf]"
+                      : "bg-[#c00000]/10 border-[#c00000]/50 text-[#c00000]"
+                    : isDark
+                    ? "bg-gray-900 border-gray-800 text-gray-400"
+                    : "bg-slate-50 border-slate-200 text-slate-500"
+                }`}
+                title="Toggle AI voice speech narration"
+              >
+                <span className="flex items-center gap-1">
+                  <span>🎙️</span>
+                  <span>AI Voice</span>
+                </span>
+                <span className="text-[10px] font-bold">{isVoiceEnabled ? "ON" : "OFF"}</span>
+              </button>
+            </div>
+
+            {/* Sound Style / Theme Dropdown */}
+            <div className="space-y-1">
+              <label className={`text-[10px] font-bold uppercase tracking-wider block ${
+                isDark ? "text-gray-400" : "text-slate-500"
+              }`}>
+                Sound Theme:
+              </label>
+              <select
+                value={sfxTheme}
+                onChange={(e) => setSfxTheme(e.target.value as SoundTheme)}
+                aria-label="Sound Theme"
+                className={`w-full rounded-md px-2 py-1.5 text-xs font-medium focus:outline-none focus:border-[#c00000] border ${
+                  isDark
+                    ? "bg-gray-900 border-gray-700 text-gray-100"
+                    : "bg-white border-slate-300 text-slate-800"
+                }`}
+              >
+                <option value="telecom">📞 Telecom Modern (SIP Harmonic)</option>
+                <option value="soft">🍃 Soft Acoustic (Subtle Clicks)</option>
+                <option value="chime">🔔 Pure Chimes (Harmonic Triads)</option>
+                <option value="mute">🔇 Mute All SFX (Completely Silent)</option>
+              </select>
+            </div>
+
+            {/* Volume Slider */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className={`text-[10px] font-bold uppercase tracking-wider ${
+                  isDark ? "text-gray-400" : "text-slate-500"
+                }`}>
+                  Master SFX Volume:
+                </span>
+                <span className="font-mono text-[10px] text-gray-400">
+                  {Math.round(sfxVolume * 100)}%
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="0.4"
+                step="0.02"
+                value={sfxVolume}
+                onChange={(e) => setSfxVolume(parseFloat(e.target.value))}
+                className="w-full accent-[#c00000] cursor-pointer h-1.5 bg-gray-700 rounded-lg"
+              />
+            </div>
+          </div>
+
+          {/* Customer Call CX Simulator Card */}
+          <div className={`p-2.5 rounded-xl border space-y-2 ${
+            isDark ? "bg-[#111726]/80 border-gray-800" : "bg-slate-50 border-slate-200"
+          }`}>
+            <div className="flex items-center justify-between">
+              <span className={`text-[11px] font-bold flex items-center gap-1.5 ${isDark ? "text-gray-100" : "text-slate-900"}`}>
+                <span>💬</span> Customer Journey Script
+              </span>
+              <span className={`text-[9px] px-1.5 py-0.5 rounded font-mono ${
+                isDark ? "bg-slate-800 text-slate-300" : "bg-white border border-slate-200 text-slate-700"
+              }`}>
+                {getActiveScenario()?.messages?.length || 0} Steps
+              </span>
+            </div>
+
+            {/* Scenario Picker */}
+            <div className="space-y-1">
+              <label className={`text-[10px] font-bold uppercase tracking-wider block ${
+                isDark ? "text-gray-400" : "text-slate-500"
+              }`}>
+                Active Scenario:
+              </label>
+              <select
+                value={selectedScenarioId}
+                onChange={(e) => setScenario(e.target.value)}
+                aria-label="Active Call Scenario"
+                className={`w-full rounded-md px-2 py-1.5 text-xs font-medium focus:outline-none focus:border-[#c00000] border ${
+                  isDark
+                    ? "bg-gray-900 border-gray-700 text-gray-100"
+                    : "bg-white border-slate-300 text-slate-800"
+                }`}
+              >
+                {CALL_SCENARIOS.map((sc) => (
+                  <option key={sc.id} value={sc.id}>
+                    {sc.icon} {sc.shortLabel}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="grid grid-cols-2 gap-1.5 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isTranscriptOpen) setIsTranscriptOpen(true);
+                  setTranscriptViewMode("live");
+                }}
+                className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-[#c00000] hover:bg-[#a50000] text-white text-xs font-bold shadow-xs transition cursor-pointer"
+              >
+                <span>🎧</span>
+                <span>Open CX</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isTranscriptOpen) setIsTranscriptOpen(true);
+                  setTranscriptViewMode("edit");
+                }}
+                className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg border text-xs font-semibold transition cursor-pointer ${
+                  isDark
+                    ? "border-gray-700 bg-gray-800 hover:bg-gray-700 text-gray-200 hover:text-white"
+                    : "border-slate-300 bg-white hover:bg-slate-100 text-slate-800"
+                }`}
+              >
+                <span>✏️</span>
+                <span>Edit Script</span>
+              </button>
+            </div>
+
+            {/* Reset to Default */}
+            <button
+              type="button"
+              onClick={() => resetScenarioToDefault(selectedScenarioId)}
+              className={`w-full text-center text-[10px] py-1 text-gray-400 hover:text-white transition underline cursor-pointer`}
+            >
+              ↺ Reset Scenario Dialogs to Default
+            </button>
+          </div>
+        </div>
 
         {/* Tip footer */}
         <div className={`pt-2.5 border-t text-[11px] leading-relaxed space-y-1.5 ${isDark ? "border-gray-800 text-gray-400" : "border-slate-200 text-slate-500"}`}>
@@ -1146,6 +1360,18 @@ export function Inspector({ selection, onClearSelection }: { selection: Sel; onC
                 </div>
               </div>
             )}
+            {/* Audio Step Preview */}
+            <div className="pt-2 border-t border-gray-800">
+              <button
+                type="button"
+                onClick={() => playStepSound(n.data.title, n.type)}
+                className="w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-gray-700 bg-gray-900/60 hover:bg-gray-800 hover:text-white text-xs text-gray-300 transition cursor-pointer"
+                title="Preview sound effect for this block"
+              >
+                <span>🔊</span>
+                <span>Test Block Sound</span>
+              </button>
+            </div>
           </div>
         )}
       </aside>

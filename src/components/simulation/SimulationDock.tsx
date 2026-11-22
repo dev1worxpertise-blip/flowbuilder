@@ -62,9 +62,14 @@ export function SimulationDock() {
     if (node) {
       playStepSound(node.data.title, node.type);
       narrateStep(node.data.title, node.data.subtitle);
-      processTranscriptStep(node.data.title, node.data.subtitle);
+      processTranscriptStep(
+        node.data.title,
+        node.data.subtitle,
+        visitedNodeIds.length,
+        diagram.nodes.length
+      );
     }
-  }, [isActive, currentNodeId, diagram, playStepSound, narrateStep, processTranscriptStep]);
+  }, [isActive, currentNodeId, diagram, visitedNodeIds.length, playStepSound, narrateStep, processTranscriptStep]);
 
   // Stop speech when paused, completed or inactive
   useEffect(() => {
@@ -244,7 +249,7 @@ export function SimulationDock() {
           <AudioControls compact />
         </div>
 
-        {/* Live Call Transcript Toggle */}
+        {/* Customer Call CX Simulator Toggle */}
         <div className="border-l border-gray-800 pl-2">
           <button
             onClick={toggleTranscript}
@@ -253,10 +258,10 @@ export function SimulationDock() {
                 ? "bg-[#c00000] text-white shadow-sm"
                 : "text-gray-300 hover:bg-gray-800 hover:text-white"
             }`}
-            title="Toggle Live Call Transcript & Customer Journey Simulator"
+            title="Customer Call Experience (CX) — View live caller & AI bot conversation"
           >
-            <span>💬</span>
-            <span className="hidden sm:inline">Call Log</span>
+            <span>🎧</span>
+            <span className="hidden sm:inline">Call CX</span>
           </button>
         </div>
 

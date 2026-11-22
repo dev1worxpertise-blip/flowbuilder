@@ -52,4 +52,21 @@ describe("transcriptStore", () => {
     useTranscriptStore.getState().toggleMinimized();
     expect(useTranscriptStore.getState().isMinimized).toBe(true);
   });
+
+  it("supports switching viewMode between live and full", () => {
+    expect(useTranscriptStore.getState().viewMode).toBe("live");
+    useTranscriptStore.getState().setViewMode("full");
+    expect(useTranscriptStore.getState().viewMode).toBe("full");
+  });
+
+  it("reveals all messages on revealAllMessages", () => {
+    useTranscriptStore.getState().revealAllMessages();
+    const scenario = useTranscriptStore.getState().getActiveScenario();
+    expect(useTranscriptStore.getState().revealedMessageIds.length).toBe(scenario.messages.length);
+  });
+
+  it("handles step-based fallback when keywords do not match directly", () => {
+    useTranscriptStore.getState().processNodeStep("Custom Step A", "Unknown module", 1, 10);
+    expect(useTranscriptStore.getState().revealedMessageIds.length).toBeGreaterThan(0);
+  });
 });

@@ -145,9 +145,14 @@ function PresentContent({ onExit }: { onExit: () => void }) {
     if (tourActive && currentStep && !isSimulating) {
       playStepSound(currentStep.node.data.title, currentStep.node.type);
       narrateStep(currentStep.node.data.title, currentStep.node.data.subtitle);
-      processTranscriptStep(currentStep.node.data.title, currentStep.node.data.subtitle);
+      processTranscriptStep(
+        currentStep.node.data.title,
+        currentStep.node.data.subtitle,
+        stepIndex + 1,
+        steps.length
+      );
     }
-  }, [stepIndex, tourActive, currentStep, isSimulating, playStepSound, narrateStep, processTranscriptStep]);
+  }, [stepIndex, steps.length, tourActive, currentStep, isSimulating, playStepSound, narrateStep, processTranscriptStep]);
 
   // Stop audio on unmount or when guided tour / present exits
   useEffect(() => {
@@ -491,7 +496,7 @@ function PresentContent({ onExit }: { onExit: () => void }) {
           {/* Interactive Audio SFX & AI Voice Narration Controls */}
           <AudioControls compact />
 
-          {/* Customer Journey Live Call Transcript Toggle */}
+          {/* Customer Journey Live Call CX Simulator Toggle */}
           <button
             onClick={toggleTranscript}
             className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold border transition flex items-center gap-1.5 ${
@@ -501,10 +506,10 @@ function PresentContent({ onExit }: { onExit: () => void }) {
                 ? "border-[#232c3d] bg-[#151b27] text-slate-300 hover:border-slate-500"
                 : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 shadow-xs"
             }`}
-            title="Toggle Live Call Transcript & Customer Journey Simulator"
+            title="Customer Call Experience (CX) — View live caller & AI bot conversation"
           >
-            <span>💬</span>
-            <span className="hidden sm:inline">Call Log</span>
+            <span>🎧</span>
+            <span className="hidden sm:inline">Call CX</span>
           </button>
 
           <button
@@ -777,8 +782,8 @@ function PresentContent({ onExit }: { onExit: () => void }) {
           </div>
         )}
 
-        {/* Live Call Transcript Simulator Widget */}
-        <LiveCallTranscript />
+        {/* Live Call Transcript Simulator Widget (only when not simulating, as SimulationDock already renders it) */}
+        {!isSimulating && <LiveCallTranscript />}
       </div>
     </div>
   );

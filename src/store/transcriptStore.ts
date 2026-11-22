@@ -2,9 +2,12 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { CALL_SCENARIOS, type CallScenario, type TranscriptMessage } from "../data/callScenarios";
 
+export type TranscriptViewMode = "live" | "full";
+
 interface TranscriptState {
   isOpen: boolean;
   isMinimized: boolean;
+  viewMode: TranscriptViewMode;
   selectedScenarioId: string;
   revealedMessageIds: string[];
   activeMessage: TranscriptMessage | null;
@@ -13,10 +16,12 @@ interface TranscriptState {
   toggleOpen: () => void;
   setIsMinimized: (isMinimized: boolean) => void;
   toggleMinimized: () => void;
+  setViewMode: (mode: TranscriptViewMode) => void;
   setScenario: (scenarioId: string) => void;
 
-  processNodeStep: (title: string, subtitle?: string) => void;
+  processNodeStep: (title: string, subtitle?: string, stepNumber?: number, totalSteps?: number) => void;
   resetTranscript: () => void;
+  revealAllMessages: () => void;
 
   getActiveScenario: () => CallScenario;
   getRevealedMessages: () => TranscriptMessage[];
@@ -27,6 +32,7 @@ export const useTranscriptStore = create<TranscriptState>()(
     (set, get) => ({
       isOpen: false,
       isMinimized: false,
+      viewMode: "live",
       selectedScenarioId: "balance-inquiry",
       revealedMessageIds: [],
       activeMessage: null,
@@ -35,6 +41,7 @@ export const useTranscriptStore = create<TranscriptState>()(
       toggleOpen: () => set({ isOpen: !get().isOpen }),
       setIsMinimized: (isMinimized) => set({ isMinimized }),
       toggleMinimized: () => set({ isMinimized: !get().isMinimized }),
+      setViewMode: (viewMode) => set({ viewMode }),
 
       setScenario: (selectedScenarioId) => {
         set({
@@ -44,13 +51,13 @@ export const useTranscriptStore = create<TranscriptState>()(
         });
       },
 
-      processNodeStep: (title, subtitle = "") => {
+      processNodeStep: (title, subtitle = "", stepNumber, totalSteps) => {
         const scenario = get().getActiveScenario();
         if (!scenario) return;
 
         const combinedText = `${title} ${subtitle}`.toLowerCase();
 
-        // Find messages matching this node that haven't been revealed yet
+        // 1. Match by keyword
         const matchingMessages = scenario.messages.filter((msg) => {
           if (get().revealedMessageIds.includes(msg.id)) return false;
           return msg.triggerNodeKeywords.some((keyword) =>
@@ -65,6 +72,21 @@ export const useTranscriptStore = create<TranscriptState>()(
             revealedMessageIds: [...get().revealedMessageIds, ...newIds],
             activeMessage: latest,
           });
+          return;
+        }
+
+        // 2. Proportion fallback if simulation step provided (ensures dialogue flows even if node title differs)
+        if (typeof stepNumber === "number" && typeof totalSteps === "number" && totalSteps > 0) {
+          const targetIndex = Math.min(
+            scenario.messages.length - 1,
+            Math.floor((stepNumber / totalSteps) * scenario.messages.length)
+          );
+          const toReveal = scenario.messages.slice(0, targetIndex + 1);
+          const newIds = toReveal.map((m) => m.id);
+          set({
+            revealedMessageIds: Array.from(new Set([...get().revealedMessageIds, ...newIds])),
+            activeMessage: toReveal[toReveal.length - 1] || null,
+          });
         }
       },
 
@@ -72,6 +94,14 @@ export const useTranscriptStore = create<TranscriptState>()(
         set({
           revealedMessageIds: [],
           activeMessage: null,
+        });
+      },
+
+      revealAllMessages: () => {
+        const scenario = get().getActiveScenario();
+        set({
+          revealedMessageIds: scenario.messages.map((m) => m.id),
+          activeMessage: scenario.messages[scenario.messages.length - 1] || null,
         });
       },
 
@@ -94,6 +124,7 @@ export const useTranscriptStore = create<TranscriptState>()(
       partialize: (s) => ({
         isOpen: s.isOpen,
         isMinimized: s.isMinimized,
+        viewMode: s.viewMode,
         selectedScenarioId: s.selectedScenarioId,
       }),
     }

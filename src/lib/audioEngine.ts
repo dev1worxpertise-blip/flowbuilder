@@ -174,15 +174,31 @@ export function playStepClick(volume = 0.08): void {
   osc.stop(now + 0.06);
 }
 
+export type SoundTheme = "telecom" | "soft" | "chime" | "mute";
+
 /**
  * Automatically selects and plays the contextual sound effect for a flowchart step
  */
 export function playStepSoundForNode(
   title = "",
   kind = "card",
-  enabled = true
+  enabled = true,
+  theme: SoundTheme = "telecom",
+  volume = 0.15
 ): void {
-  if (!enabled) return;
+  if (!enabled || theme === "mute" || volume <= 0) return;
+
+  if (theme === "soft") {
+    playStepClick(volume * 0.8);
+    return;
+  }
+
+  if (theme === "chime") {
+    playConnectChime(volume);
+    return;
+  }
+
+  // Telecom & Enterprise soundscape
   const t = title.toLowerCase();
 
   if (
@@ -193,7 +209,7 @@ export function playStepSoundForNode(
     t.includes("outbound") ||
     t.includes("asterisk")
   ) {
-    playTelecomRing();
+    playTelecomRing(volume * 1.1);
   } else if (
     t.includes("connect") ||
     t.includes("sip") ||
@@ -201,7 +217,7 @@ export function playStepSoundForNode(
     t.includes("media") ||
     t.includes("session")
   ) {
-    playConnectChime();
+    playConnectChime(volume);
   } else if (
     t.includes("stt") ||
     t.includes("tts") ||
@@ -211,23 +227,23 @@ export function playStepSoundForNode(
     t.includes("transcription") ||
     t.includes("generation")
   ) {
-    playAiProcessPulse();
+    playAiProcessPulse(volume * 0.9);
   } else if (
     kind === "decision" ||
     t.includes("check") ||
     t.includes("require") ||
     t.includes("decision")
   ) {
-    playDecisionTap();
+    playDecisionTap(volume);
   } else if (
     t.includes("transfer") ||
     t.includes("human") ||
     t.includes("agent") ||
     t.includes("escalat")
   ) {
-    playAgentHandoff();
+    playAgentHandoff(volume);
   } else {
-    playStepClick();
+    playStepClick(volume * 0.6);
   }
 }
 

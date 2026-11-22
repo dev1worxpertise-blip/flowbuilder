@@ -238,11 +238,20 @@ function PresentContent({ onExit }: { onExit: () => void }) {
     }
   };
 
+  const handleExit = useCallback(() => {
+    stopAllAudio();
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+    if (isSimulating) stopSimulation();
+    onExit();
+  }, [isSimulating, stopSimulation, stopAllAudio, onExit]);
+
   // Keyboard navigation
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        onExit();
+        handleExit();
         return;
       }
       if (e.key === "ArrowRight" || e.key === " ") {
@@ -531,10 +540,7 @@ function PresentContent({ onExit }: { onExit: () => void }) {
                 ? "bg-rose-950/40 border-rose-900/60 text-rose-300 hover:bg-[#c00000] hover:text-white"
                 : "bg-rose-50 border-rose-200 text-[#c00000] hover:bg-[#c00000] hover:text-white"
             }`}
-            onClick={() => {
-              if (isSimulating) stopSimulation();
-              onExit();
-            }}
+            onClick={handleExit}
             title="Exit Presentation Mode (Esc)"
           >
             Exit

@@ -2,13 +2,14 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { CALL_SCENARIOS, type CallScenario, type TranscriptMessage } from "../data/callScenarios";
 
-export type TranscriptViewMode = "live" | "full";
+export type TranscriptViewMode = "live" | "full" | "edit";
 
 interface TranscriptState {
   isOpen: boolean;
   isMinimized: boolean;
   viewMode: TranscriptViewMode;
   selectedScenarioId: string;
+  customScenarios: Record<string, CallScenario>;
   revealedMessageIds: string[];
   activeMessage: TranscriptMessage | null;
 
@@ -23,6 +24,14 @@ interface TranscriptState {
   resetTranscript: () => void;
   revealAllMessages: () => void;
 
+  // Custom Script Editing Actions
+  updateMessageText: (msgId: string, text: string) => void;
+  updateMessageSender: (msgId: string, sender: TranscriptMessage["sender"]) => void;
+  addMessage: (sender: TranscriptMessage["sender"], text: string) => void;
+  deleteMessage: (msgId: string) => void;
+  updateCaller: (name: string, phone: string, tier: string) => void;
+  resetScenarioToDefault: (scenarioId?: string) => void;
+
   getActiveScenario: () => CallScenario;
   getRevealedMessages: () => TranscriptMessage[];
 }
@@ -33,7 +42,8 @@ export const useTranscriptStore = create<TranscriptState>()(
       isOpen: false,
       isMinimized: false,
       viewMode: "live",
-      selectedScenarioId: "balance-inquiry",
+      selectedScenarioId: "inbound-support",
+      customScenarios: {},
       revealedMessageIds: [],
       activeMessage: null,
 
@@ -75,7 +85,7 @@ export const useTranscriptStore = create<TranscriptState>()(
           return;
         }
 
-        // 2. Proportion fallback if simulation step provided (ensures dialogue flows even if node title differs)
+        // 2. Proportion fallback if simulation step provided
         if (typeof stepNumber === "number" && typeof totalSteps === "number" && totalSteps > 0) {
           const targetIndex = Math.min(
             scenario.messages.length - 1,
@@ -105,8 +115,97 @@ export const useTranscriptStore = create<TranscriptState>()(
         });
       },
 
+      // Custom Script Editing Actions
+      updateMessageText: (msgId, text) => {
+        const scenario = { ...get().getActiveScenario() };
+        const updatedMsgs = scenario.messages.map((m) =>
+          m.id === msgId ? { ...m, text } : m
+        );
+        scenario.messages = updatedMsgs;
+        set({
+          customScenarios: {
+            ...get().customScenarios,
+            [scenario.id]: scenario,
+          },
+        });
+      },
+
+      updateMessageSender: (msgId, sender) => {
+        const scenario = { ...get().getActiveScenario() };
+        const updatedMsgs = scenario.messages.map((m) =>
+          m.id === msgId ? { ...m, sender } : m
+        );
+        scenario.messages = updatedMsgs;
+        set({
+          customScenarios: {
+            ...get().customScenarios,
+            [scenario.id]: scenario,
+          },
+        });
+      },
+
+      addMessage: (sender, text) => {
+        const scenario = { ...get().getActiveScenario() };
+        const newMsg: TranscriptMessage = {
+          id: `custom_${Date.now()}`,
+          sender,
+          text,
+          timeOffset: `00:${(scenario.messages.length * 3 + 2).toString().padStart(2, "0")}`,
+          triggerNodeKeywords: [],
+        };
+        scenario.messages = [...scenario.messages, newMsg];
+        set({
+          customScenarios: {
+            ...get().customScenarios,
+            [scenario.id]: scenario,
+          },
+          revealedMessageIds: [...get().revealedMessageIds, newMsg.id],
+        });
+      },
+
+      deleteMessage: (msgId) => {
+        const scenario = { ...get().getActiveScenario() };
+        scenario.messages = scenario.messages.filter((m) => m.id !== msgId);
+        set({
+          customScenarios: {
+            ...get().customScenarios,
+            [scenario.id]: scenario,
+          },
+          revealedMessageIds: get().revealedMessageIds.filter((id) => id !== msgId),
+        });
+      },
+
+      updateCaller: (name, phone, tier) => {
+        const scenario = { ...get().getActiveScenario() };
+        scenario.caller = {
+          ...scenario.caller,
+          name,
+          phone,
+          tier,
+        };
+        set({
+          customScenarios: {
+            ...get().customScenarios,
+            [scenario.id]: scenario,
+          },
+        });
+      },
+
+      resetScenarioToDefault: (scenarioId) => {
+        const targetId = scenarioId || get().selectedScenarioId;
+        const customs = { ...get().customScenarios };
+        delete customs[targetId];
+        set({
+          customScenarios: customs,
+          revealedMessageIds: [],
+        });
+      },
+
       getActiveScenario: () => {
         const state = get();
+        if (state.customScenarios[state.selectedScenarioId]) {
+          return state.customScenarios[state.selectedScenarioId];
+        }
         return (
           CALL_SCENARIOS.find((s) => s.id === state.selectedScenarioId) ||
           CALL_SCENARIOS[0]
@@ -126,6 +225,7 @@ export const useTranscriptStore = create<TranscriptState>()(
         isMinimized: s.isMinimized,
         viewMode: s.viewMode,
         selectedScenarioId: s.selectedScenarioId,
+        customScenarios: s.customScenarios,
       }),
     }
   )

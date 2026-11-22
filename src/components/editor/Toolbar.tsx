@@ -593,6 +593,20 @@ export function Toolbar({
 
         {/* Simulation Controls */}
         <div className={`flex items-center gap-1 border-l pl-1 ${isDark ? "border-[#232c3d]" : "border-slate-200"}`}>
+          {/* Interactive Guided Tour Button */}
+          <button
+            className={`rounded-lg px-2 py-1 text-xs font-semibold transition flex items-center gap-1 shrink-0 ${
+              isDark
+                ? "border border-rose-600/50 bg-rose-950/30 text-rose-300 hover:bg-rose-900/50"
+                : "border border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100"
+            }`}
+            onClick={onPresent}
+            title="Start Interactive Guided Tour Walkthrough (Hotkey: P)"
+          >
+            <span>🎯</span>
+            <span className="hidden xl:inline">Tour</span>
+          </button>
+
           <button
             className={`rounded-lg px-2 py-1 text-xs font-semibold transition flex items-center gap-1 shrink-0 ${
               isSimulating

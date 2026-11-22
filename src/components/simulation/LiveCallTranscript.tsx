@@ -25,6 +25,14 @@ export function LiveCallTranscript() {
   const updateCaller = useTranscriptStore((s) => s.updateCaller);
   const resetScenarioToDefault = useTranscriptStore((s) => s.resetScenarioToDefault);
 
+  // Interactive Live CX & Export Actions
+  const injectInteractiveCustomerMessage = useTranscriptStore((s) => s.injectInteractiveCustomerMessage);
+  const exportTranscriptAsText = useTranscriptStore((s) => s.exportTranscriptAsText);
+
+  const [customerInput, setCustomerInput] = useState("");
+  const [isCopied, setIsCopied] = useState(false);
+  const [showMetrics, setShowMetrics] = useState(false);
+
   const scenario = getActiveScenario();
   const revealedMessages = getRevealedMessages();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -95,6 +103,35 @@ export function LiveCallTranscript() {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
     }
+  };
+
+  const handleSendCustomer = (text: string) => {
+    if (!text.trim()) return;
+    setCustomerInput("");
+    setViewMode("full");
+    const { botMessage } = injectInteractiveCustomerMessage(text.trim(), formatTime(seconds));
+    speakStep("Worxpertise AI Bot", botMessage.text, {
+      onStart: () => setSpeakingMessageId(botMessage.id),
+      onEnd: () => setSpeakingMessageId(null),
+    });
+  };
+
+  const handleCopyTranscript = () => {
+    const txt = exportTranscriptAsText();
+    void navigator.clipboard.writeText(txt);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
+
+  const handleExportTxt = () => {
+    const txt = exportTranscriptAsText();
+    const blob = new Blob([txt], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `worxpertise-${scenario.id}-call-transcript.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const playSingleMessage = (msg: TranscriptMessage) => {
@@ -213,6 +250,18 @@ export function LiveCallTranscript() {
 
         <div className="flex items-center gap-1">
           <button
+            onClick={() => setShowMetrics((m) => !m)}
+            className={`rounded-lg px-2 py-1 text-[10px] font-bold border transition flex items-center gap-1 cursor-pointer ${
+              showMetrics
+                ? "bg-sky-600 border-sky-400 text-white"
+                : "border-gray-700 bg-gray-800/80 text-gray-300 hover:text-white"
+            }`}
+            title="Toggle Live Telephony QoS & CSAT Metrics"
+          >
+            <span>📊</span>
+            <span>QoS</span>
+          </button>
+          <button
             onClick={toggleMinimized}
             className="rounded-lg p-1.5 text-xs text-gray-400 hover:bg-gray-800 hover:text-white transition"
             title="Minimize"
@@ -231,6 +280,28 @@ export function LiveCallTranscript() {
           </button>
         </div>
       </div>
+
+      {/* Real-time Telephony QoS & CX Analytics Banner */}
+      {showMetrics && (
+        <div className="bg-[#090d16] border-b border-gray-800 px-3.5 py-1.5 grid grid-cols-4 gap-2 text-center animate-in fade-in duration-150">
+          <div className="rounded bg-gray-900/80 p-1 border border-gray-800">
+            <div className="text-[9px] text-gray-400 uppercase font-bold">Audio MOS</div>
+            <div className="text-xs font-mono font-bold text-emerald-400">4.4 / 5.0</div>
+          </div>
+          <div className="rounded bg-gray-900/80 p-1 border border-gray-800">
+            <div className="text-[9px] text-gray-400 uppercase font-bold">Codec</div>
+            <div className="text-xs font-mono font-bold text-sky-400">Opus 48k</div>
+          </div>
+          <div className="rounded bg-gray-900/80 p-1 border border-gray-800">
+            <div className="text-[9px] text-gray-400 uppercase font-bold">Sentiment</div>
+            <div className="text-xs font-mono font-bold text-emerald-400">96% 😊</div>
+          </div>
+          <div className="rounded bg-gray-900/80 p-1 border border-gray-800">
+            <div className="text-[9px] text-gray-400 uppercase font-bold">FCR Res.</div>
+            <div className="text-xs font-mono font-bold text-amber-300">100% ✓</div>
+          </div>
+        </div>
+      )}
 
       {/* Scenario Selector & Caller Badge */}
       <div className="px-3.5 py-2.5 bg-[#090d15] border-b border-gray-800/60 flex flex-col gap-2">
@@ -516,11 +587,19 @@ export function LiveCallTranscript() {
                   {/* Single Message Listen Button */}
                   <button
                     onClick={() => playSingleMessage(msg)}
-                    className="text-[9px] text-gray-400 hover:text-white ml-0.5 transition"
+                    className="text-[9px] text-gray-400 hover:text-white ml-0.5 transition cursor-pointer"
                     title="Speak this dialogue aloud"
                   >
                     🔊
                   </button>
+                  {/* Speaking Equalizer Waveform */}
+                  {isSpeakingThis && (
+                    <span className="flex items-center gap-0.5 ml-1 text-emerald-400" title="Speaking right now">
+                      <span className="h-2 w-0.5 bg-emerald-400 animate-pulse" />
+                      <span className="h-3.5 w-0.5 bg-emerald-400 animate-pulse delay-75" />
+                      <span className="h-2 w-0.5 bg-emerald-400 animate-pulse delay-150" />
+                    </span>
+                  )}
                 </div>
 
                 <div
@@ -543,15 +622,85 @@ export function LiveCallTranscript() {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Interactive "Speak / Type as Customer" Bar */}
+      {viewMode !== "edit" && (
+        <div className="border-t border-gray-800 bg-[#101625]/95 p-2.5 space-y-2">
+          {/* Quick Reply Chips */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 text-[10px] no-scrollbar">
+            <span className="text-gray-400 font-bold text-[9px] uppercase tracking-wider shrink-0">
+              Quick Prompt:
+            </span>
+            {[
+              "Check ticket status",
+              "Connect to supervisor",
+              "Confirm review appointment",
+              "Billing & refund update",
+            ].map((chip) => (
+              <button
+                key={chip}
+                onClick={() => handleSendCustomer(chip)}
+                className="shrink-0 rounded-full border border-gray-700 bg-gray-900/90 px-2.5 py-0.5 text-gray-300 hover:border-sky-500 hover:text-white transition cursor-pointer"
+              >
+                💬 {chip}
+              </button>
+            ))}
+          </div>
+
+          {/* Customer Input Field */}
+          <div className="flex items-center gap-1.5">
+            <input
+              type="text"
+              value={customerInput}
+              onChange={(e) => setCustomerInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && customerInput.trim()) {
+                  handleSendCustomer(customerInput.trim());
+                }
+              }}
+              placeholder={`Type or speak as ${scenario.caller.name}...`}
+              className="flex-1 rounded-lg border border-gray-700 bg-gray-900/90 px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:border-[#c00000] focus:outline-none"
+            />
+            <button
+              onClick={() => {
+                if (customerInput.trim()) {
+                  handleSendCustomer(customerInput.trim());
+                }
+              }}
+              disabled={!customerInput.trim()}
+              className="rounded-lg bg-[#c00000] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#a00000] disabled:opacity-40 transition flex items-center gap-1 shrink-0 cursor-pointer"
+            >
+              <span>Send</span>
+              <span>🎙️</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Footer Actions */}
       <div className="border-t border-gray-800/80 px-3.5 py-2 bg-[#0d121f] flex items-center justify-between">
-        <button
-          onClick={resetTranscript}
-          className="text-[10.5px] font-semibold text-gray-400 hover:text-white transition"
-          title="Reset conversation state"
-        >
-          ↺ Reset Log
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={resetTranscript}
+            className="text-[10.5px] font-semibold text-gray-400 hover:text-white transition cursor-pointer"
+            title="Reset conversation state"
+          >
+            ↺ Reset
+          </button>
+          <button
+            onClick={handleCopyTranscript}
+            className="text-[10.5px] font-semibold text-sky-400 hover:text-sky-300 transition flex items-center gap-1 cursor-pointer"
+            title="Copy full conversation transcript to clipboard"
+          >
+            <span>{isCopied ? "✓ Copied!" : "📋 Copy Log"}</span>
+          </button>
+          <button
+            onClick={handleExportTxt}
+            className="text-[10.5px] font-semibold text-gray-400 hover:text-white transition flex items-center gap-1 cursor-pointer"
+            title="Download formatted text transcript file"
+          >
+            <span>💾 .txt</span>
+          </button>
+        </div>
         <span className="text-[10px] text-gray-400 font-mono">
           Scenario: <b className="text-gray-200">{scenario.shortLabel}</b>
         </span>

@@ -4,7 +4,7 @@ import { buildHdlTemplate } from "./hdl";
 export interface TemplateMeta {
   id: string;
   name: string;
-  category: "DevOps" | "Product & Auth" | "Operations" | "Support & IT" | "Hardware & CRM";
+  category: "DevOps" | "Product & Auth" | "Operations" | "Support & IT" | "Hardware & CRM" | "AI & Telecom";
   description: string;
   icon: string;
   nodeCount: number;
@@ -359,8 +359,177 @@ export function buildHospitalTemplate(): Diagram {
   };
 }
 
+// 7. Worxpertise Enterprise AI Voice Platform Architecture
+export function buildAiVoicePlatformTemplate(): Diagram {
+  const now = Date.now();
+  const nodes: FlowNode[] = [
+    shapeNode("v_sip", "pill", "1. Inbound SIP Call", "PSTN / Asterisk Trunk (G.711)", 40, 220, "blue", 175, 56),
+    cardNode("v_bridge", "2. LiveKit Media Bridge", "SIP to WebRTC audio conversion", 280, 205, "blue", "📡"),
+    cardNode("v_agent", "3. Worxpertise Voice Agent", "Real-Time Orchestration & VAD", 550, 205, "green", "🤖"),
+    cardNode("v_stt", "4. Deepgram Real-Time STT", "Fast streaming speech transcription", 820, 90, "neutral", "🎙️"),
+    cardNode("v_llm", "5. LLM Reasoning Engine", "Intent classification & tool routing", 1100, 90, "amber", "🧠"),
+    cardNode("v_tts", "6. Cartesia Real-Time TTS", "Low-latency voice packet generation", 1380, 90, "green", "🔊"),
+    decisionNode("v_esc", "Transfer Needed?", 820, 310, "amber"),
+    cardNode("v_human", "7A. Human Agent Transfer", "Warm SIP transfer with caller context", 1100, 320, "pink", "👩‍💼"),
+    shapeNode("v_db", "database", "7B. PostgreSQL Analytics", "Audio recordings, transcripts & CSAT", 1380, 310, "blue", 195, 80),
+    cardNode("v_webhook", "8. Post-Call Webhook", "Dispatch structured event to CRM", 1650, 320, "green", "🔗"),
+  ];
+
+  const edges: FlowEdge[] = [
+    edge("e_v1", "v_sip", "v_bridge", "#60a5fa", "dots", "SIP INVITE"),
+    edge("e_v2", "v_bridge", "v_agent", "#60a5fa", "dots", "WebRTC Audio"),
+    edge("e_v3_stt", "v_agent", "v_stt", "#60a5fa", "dots", "Audio Stream"),
+    edge("e_v4_llm", "v_stt", "v_llm", "#a78bfa", "dots", "Transcript"),
+    edge("e_v5_tts", "v_llm", "v_tts", "#f59e0b", "dots", "AI Tokens"),
+    edge("e_v6_bot", "v_tts", "v_agent", "#10b981", "dots", "Synthetic Voice"),
+    edge("e_v3_esc", "v_agent", "v_esc", "#fbbf24", "dots"),
+    edge("e_vesc_yes", "v_esc", "v_human", "#f43f5e", "dots", "Yes (Escalate)"),
+    edge("e_vesc_no", "v_esc", "v_db", "#10b981", "dots", "No (Autonomous)"),
+    edge("e_vdb_hook", "v_db", "v_webhook", "#10b981", "dots", "Delivery"),
+  ];
+
+  return {
+    id: `ai-voice-${now}`,
+    name: "Worxpertise Enterprise AI Voice Platform",
+    createdAt: now,
+    updatedAt: now,
+    nodes,
+    edges,
+    theme: "dark",
+  };
+}
+
+// 8. Intelligent Call Center ACD & Skill Routing
+export function buildAcdRoutingTemplate(): Diagram {
+  const now = Date.now();
+  const nodes: FlowNode[] = [
+    shapeNode("acd1", "pill", "1. Customer Dial-In", "Toll-Free DID Trunk", 40, 220, "blue", 160, 56),
+    cardNode("acd2", "2. Conversational IVR", "Speech intent recognition", 260, 205, "neutral", "🤖"),
+    shapeNode("acd3", "predefined", "3. CRM Customer Lookup", "Fetch account tier & past tickets", 500, 205, "neutral", 185, 75),
+    decisionNode("acd4", "VIP Platinum Tier?", 750, 185, "amber"),
+    cardNode("acd5a", "4A. Priority VIP Queue", "Immediate routing (<10s SLA)", 1000, 90, "green", "⭐"),
+    cardNode("acd5b", "4B. Standard Skill Queue", "Dynamic FIFO wait with MOH", 1000, 310, "blue", "👥"),
+    cardNode("acd6", "5. Screen-Pop & Softphone", "Push caller context to agent screen", 1280, 205, "amber", "🖥️"),
+    cardNode("acd7", "6. Live Agent Interaction", "Two-way WebRTC conversation", 1550, 205, "green", "🎧"),
+    shapeNode("acd8", "pill", "7. Automated CSAT Survey", "SMS / IVR 1-5 rating", 1820, 220, "green", 175, 56),
+  ];
+
+  const edges: FlowEdge[] = [
+    edge("e_acd1", "acd1", "acd2", "#60a5fa"),
+    edge("e_acd2", "acd2", "acd3", "#60a5fa"),
+    edge("e_acd3", "acd3", "acd4", "#fbbf24"),
+    edge("e_acd4_yes", "acd4", "acd5a", "#10b981", "dots", "Yes (Platinum)"),
+    edge("e_acd4_no", "acd4", "acd5b", "#60a5fa", "dots", "No (Standard)"),
+    edge("e_acd5a", "acd5a", "acd6", "#10b981"),
+    edge("e_acd5b", "acd5b", "acd6", "#60a5fa"),
+    edge("e_acd6", "acd6", "acd7", "#10b981", "dots"),
+    edge("e_acd7", "acd7", "acd8", "#10b981"),
+  ];
+
+  return {
+    id: `acd-routing-${now}`,
+    name: "Intelligent Call Center ACD & Skill Routing",
+    createdAt: now,
+    updatedAt: now,
+    nodes,
+    edges,
+    theme: "dark",
+  };
+}
+
+// 9. FinTech Real-Time Fraud Detection Engine
+export function buildFraudEngineTemplate(): Diagram {
+  const now = Date.now();
+  const nodes: FlowNode[] = [
+    shapeNode("fr1", "pill", "1. Payment Transaction", "Card / UPI / NetBanking Auth", 40, 220, "blue", 175, 56),
+    cardNode("fr2", "2. API Gateway & Tokenize", "PCI-DSS tokenization & TLS 1.3", 280, 205, "neutral", "🔐"),
+    shapeNode("fr3", "database", "3. Redis Velocity Cache", "Sliding window frequency check", 540, 200, "blue", 185, 80),
+    cardNode("fr4", "4. ML Fraud Engine", "XGBoost scoring (<40ms latency)", 790, 205, "amber", "🧠"),
+    decisionNode("fr5", "Risk Score > 80?", 1040, 185, "amber"),
+    cardNode("fr6a", "5A. Step-Up 2FA Challenge", "Biometric push / OTP verification", 1300, 90, "amber", "📱"),
+    cardNode("fr6b", "5B. Instant Approval", "Clear funds to merchant settlement", 1300, 310, "green", "💳"),
+    cardNode("fr7a", "6A. Account Freeze Alert", "Block card & notify SecOps incident", 1560, 90, "pink", "🚨"),
+    shapeNode("fr7b", "pill", "6B. SMS Receipt Sent", "Push notification & balance update", 1560, 320, "green", 170, 56),
+  ];
+
+  const edges: FlowEdge[] = [
+    edge("e_fr1", "fr1", "fr2", "#60a5fa"),
+    edge("e_fr2", "fr2", "fr3", "#60a5fa"),
+    edge("e_fr3", "fr3", "fr4", "#60a5fa"),
+    edge("e_fr4", "fr4", "fr5", "#fbbf24"),
+    edge("e_fr5_yes", "fr5", "fr6a", "#f43f5e", "dots", "High Risk (>80)"),
+    edge("e_fr5_no", "fr5", "fr6b", "#10b981", "dots", "Low Risk (<80)"),
+    edge("e_fr6a", "fr6a", "fr7a", "#f43f5e", "dots", "Failed 2FA"),
+    edge("e_fr6b", "fr6b", "fr7b", "#10b981"),
+  ];
+
+  return {
+    id: `fraud-${now}`,
+    name: "FinTech Real-Time Fraud Detection Engine",
+    createdAt: now,
+    updatedAt: now,
+    nodes,
+    edges,
+    theme: "dark",
+  };
+}
+
+// 10. Microservices Kubernetes GitOps & Service Mesh
+export function buildK8sMeshTemplate(): Diagram {
+  const now = Date.now();
+  const nodes: FlowNode[] = [
+    shapeNode("k8s1", "pill", "1. Git Pull Request", "Main branch merged via GitHub", 40, 220, "blue", 175, 56),
+    cardNode("k8s2", "2. GitHub Actions Build", "Container security & SBOM scan", 280, 205, "neutral", "⚙️"),
+    cardNode("k8s3", "3. ArgoCD GitOps Sync", "Cluster manifest reconciliation", 540, 205, "blue", "🐙"),
+    cardNode("k8s4", "4. Istio VirtualService", "Canary split (90% v1 / 10% v2)", 800, 205, "amber", "☸️"),
+    decisionNode("k8s5", "5xx Error < 0.1%?", 1060, 185, "amber"),
+    cardNode("k8s6a", "5A. Promote v2 to 100%", "Full production traffic rollout", 1320, 90, "green", "🟢"),
+    cardNode("k8s6b", "5B. Auto-Rollback to v1", "Instant shift back to stable version", 1320, 310, "pink", "🔴"),
+    shapeNode("k8s7", "pill", "6. Slack Release Alert", "Deployment SLA report broadcast", 1590, 205, "green", 185, 56),
+  ];
+
+  const edges: FlowEdge[] = [
+    edge("e_k8s1", "k8s1", "k8s2", "#60a5fa"),
+    edge("e_k8s2", "k8s2", "k8s3", "#60a5fa"),
+    edge("e_k8s3", "k8s3", "k8s4", "#60a5fa"),
+    edge("e_k8s4", "k8s4", "k8s5", "#fbbf24"),
+    edge("e_k8s5_yes", "k8s5", "k8s6a", "#10b981", "dots", "Healthy (<0.1%)"),
+    edge("e_k8s5_no", "k8s5", "k8s6b", "#f43f5e", "dots", "Errors Spike (>0.1%)"),
+    edge("e_k8s6a", "k8s6a", "k8s7", "#10b981"),
+    edge("e_k8s6b", "k8s6b", "k8s7", "#f43f5e"),
+  ];
+
+  return {
+    id: `k8s-mesh-${now}`,
+    name: "Kubernetes GitOps & Service Mesh CI/CD",
+    createdAt: now,
+    updatedAt: now,
+    nodes,
+    edges,
+    theme: "dark",
+  };
+}
+
 // Master Template Catalog
 export const TEMPLATE_CATALOG: TemplateMeta[] = [
+  {
+    id: "template-ai-voice",
+    name: "Worxpertise Enterprise AI Voice Platform",
+    category: "AI & Telecom",
+    description: "Flagship voice orchestration: SIP trunking, WebRTC media bridge, STT, LLM reasoning, TTS synthesis, and PostgreSQL analytics.",
+    icon: "🎙️",
+    nodeCount: 10,
+    build: buildAiVoicePlatformTemplate,
+  },
+  {
+    id: "template-acd-routing",
+    name: "Intelligent Call Center ACD & Skill Routing",
+    category: "AI & Telecom",
+    description: "Enterprise telephony ACD flow with conversational IVR, VIP priority queue, CRM screen-pop, and agent softphone handoff.",
+    icon: "📞",
+    nodeCount: 9,
+    build: buildAcdRoutingTemplate,
+  },
   {
     id: "template-banking",
     name: "FinTech Banking KYC & Loan Engine",
@@ -369,6 +538,24 @@ export const TEMPLATE_CATALOG: TemplateMeta[] = [
     icon: "🏦",
     nodeCount: 10,
     build: buildBankingTemplate,
+  },
+  {
+    id: "template-fraud-engine",
+    name: "FinTech Real-Time Fraud Detection Engine",
+    category: "Operations",
+    description: "Sub-40ms transaction fraud scoring with Redis velocity cache, ML risk classification, step-up 2FA, and ledger settlement.",
+    icon: "🛡️",
+    nodeCount: 9,
+    build: buildFraudEngineTemplate,
+  },
+  {
+    id: "template-k8s-mesh",
+    name: "Kubernetes GitOps & Service Mesh CI/CD",
+    category: "DevOps",
+    description: "Cloud-native deployment: Git push, ArgoCD GitOps, Istio canary traffic splitting, Prometheus SLI checks, and auto-rollback.",
+    icon: "☸️",
+    nodeCount: 8,
+    build: buildK8sMeshTemplate,
   },
   {
     id: "template-etl",

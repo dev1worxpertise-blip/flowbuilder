@@ -93,13 +93,15 @@ export function CardNode({ id, data, selected }: NodeProps & { data: NodeData })
         </div>
       )}
       <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <div className="font-bold text-sm" style={{ color: titleColor }}>
+        <div className="min-w-0 flex-1 break-words">
+          <div className="font-bold text-sm leading-snug break-words" style={{ color: titleColor }}>
             {data.title}
           </div>
-          <div className="text-xs mt-1" style={{ color: subtitleColor }}>
-            {data.subtitle}
-          </div>
+          {data.subtitle && (
+            <div className="text-xs mt-1 leading-relaxed break-words whitespace-pre-wrap" style={{ color: subtitleColor }}>
+              {data.subtitle}
+            </div>
+          )}
         </div>
         {iconify ? (
           <span data-iconify={iconify} className="flex shrink-0 items-center justify-center">

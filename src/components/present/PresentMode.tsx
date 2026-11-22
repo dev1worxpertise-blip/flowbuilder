@@ -338,13 +338,13 @@ function PresentContent({ onExit }: { onExit: () => void }) {
       style={{ backgroundColor: canvasBg }}
     >
       {/* Top Header Bar - Worxpertise Corporate Brand */}
-      <div className={`relative z-20 flex w-full items-center justify-between gap-1.5 sm:gap-2.5 border-b px-2.5 sm:px-4 py-2 backdrop-blur-md transition-colors duration-150 ${
+      <div className={`relative z-20 flex w-full max-w-full items-center justify-between gap-1.5 sm:gap-2 border-b px-2 sm:px-3 py-1.5 sm:py-2 backdrop-blur-md transition-colors duration-150 overflow-hidden shrink-0 ${
         isDark
           ? "border-[#232c3d] bg-[#0d111a]/95 text-slate-100 shadow-sm"
           : "border-slate-200 bg-white/95 text-slate-800 shadow-xs"
       }`}>
         {/* Left: Brand & Diagram Title (Flex with min-w-0 to allow graceful truncation) */}
-        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 max-w-[220px] md:max-w-xs lg:max-w-sm xl:max-w-md shrink">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 max-w-[130px] sm:max-w-[180px] md:max-w-[220px] lg:max-w-xs xl:max-w-sm shrink">
           {/* Worxpertise Logo Badge */}
           <div className="bg-white p-1 px-1.5 rounded-lg border border-slate-200 shadow-xs flex items-center shrink-0">
             <img
@@ -364,7 +364,7 @@ function PresentContent({ onExit }: { onExit: () => void }) {
               <h1 className={`text-xs sm:text-sm font-extrabold leading-tight truncate ${isDark ? "text-white" : "text-slate-900"}`} title={diagram.name}>
                 {diagram.name}
               </h1>
-              <span className={`hidden md:inline-flex rounded-full px-2 py-0.5 text-[9px] font-bold border shrink-0 ${
+              <span className={`hidden lg:inline-flex rounded-full px-2 py-0.5 text-[9px] font-bold border shrink-0 ${
                 isDark
                   ? "bg-[#c00000]/15 border-[#c00000]/40 text-[#ff4040]"
                   : "bg-rose-50 border-rose-200/80 text-[#c00000]"
@@ -372,14 +372,14 @@ function PresentContent({ onExit }: { onExit: () => void }) {
                 Present
               </span>
             </div>
-            <p className={`hidden xl:block text-[10px] truncate ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+            <p className={`hidden 2xl:block text-[10px] truncate ${isDark ? "text-slate-400" : "text-slate-500"}`}>
               Worxpertise Flow Studio — Interactive Architecture Walkthrough
             </p>
           </div>
         </div>
 
         {/* Central Mode Switcher */}
-        <div className={`flex items-center gap-0.5 sm:gap-1 rounded-xl border p-0.5 sm:p-1 shrink-0 transition ${
+        <div className={`flex items-center gap-0.5 sm:gap-1 rounded-xl border p-0.5 shrink-0 transition ${
           isDark ? "border-[#232c3d] bg-[#111827]/80" : "border-slate-200 bg-slate-100/90 shadow-inner"
         }`}>
           <button
@@ -444,10 +444,10 @@ function PresentContent({ onExit }: { onExit: () => void }) {
         {/* Right Controls - ALWAYS PINNED, SHRINK-0, AND NEVER CUT OFF */}
         <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-auto">
           {/* Flow Speed Toggles */}
-          <div className={`hidden lg:flex items-center rounded-lg border px-1 py-0.5 text-xs ${
+          <div className={`hidden xl:flex items-center rounded-lg border px-1 py-0.5 text-xs ${
             isDark ? "border-[#232c3d] bg-[#151b27] text-slate-400" : "border-slate-200 bg-white text-slate-700 shadow-xs"
           }`}>
-            <span className="text-[10px] px-1 font-semibold text-slate-400 hidden xl:inline">Flow:</span>
+            <span className="text-[10px] px-1 font-semibold text-slate-400 hidden 2xl:inline">Flow:</span>
             {[1, 2, 3].map((spd) => (
               <button
                 key={spd}
@@ -467,7 +467,7 @@ function PresentContent({ onExit }: { onExit: () => void }) {
 
           {/* Pause / Resume Flows */}
           <button
-            className={`rounded-lg border px-2 sm:px-2.5 py-1 text-xs font-semibold transition flex items-center gap-1 shrink-0 ${
+            className={`rounded-lg border px-2 py-1 text-xs font-semibold transition flex items-center gap-1 shrink-0 ${
               isDark
                 ? "border-[#232c3d] bg-[#151b27] text-slate-200 hover:border-slate-500"
                 : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 shadow-xs"
@@ -476,12 +476,12 @@ function PresentContent({ onExit }: { onExit: () => void }) {
             title={playing ? "Pause animation flows" : "Resume animation flows"}
           >
             <span>{playing ? "⏸" : "▶"}</span>
-            <span className="hidden md:inline">{playing ? "Pause" : "Resume"}</span>
+            <span className="hidden xl:inline">{playing ? "Pause" : "Resume"}</span>
           </button>
 
           {/* Reset Walkthrough */}
           <button
-            className={`rounded-lg border px-2 sm:px-2.5 py-1 text-xs font-semibold transition shrink-0 ${
+            className={`rounded-lg border px-2 py-1 text-xs font-semibold transition shrink-0 ${
               isDark
                 ? "border-[#232c3d] bg-[#151b27] text-slate-200 hover:border-slate-500"
                 : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 shadow-xs"
@@ -494,13 +494,14 @@ function PresentContent({ onExit }: { onExit: () => void }) {
             }}
             title="Restart Walkthrough"
           >
-            ↺ Reset
+            <span>↺</span>
+            <span className="hidden xl:inline ml-0.5">Reset</span>
           </button>
 
           {/* Theme Toggle (Worxpertise Light vs Dark) */}
           <button
             onClick={toggleTheme}
-            className={`rounded-lg px-2 py-1 text-xs font-semibold border transition flex items-center gap-1 shrink-0 ${
+            className={`rounded-lg px-1.5 sm:px-2 py-1 text-xs font-semibold border transition flex items-center gap-1 shrink-0 ${
               isDark
                 ? "border-[#232c3d] bg-[#151b27] text-amber-300 hover:border-amber-400"
                 : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 shadow-xs"
@@ -533,7 +534,7 @@ function PresentContent({ onExit }: { onExit: () => void }) {
 
           {/* Fullscreen Toggle */}
           <button
-            className={`rounded-lg border px-2 sm:px-2.5 py-1 text-xs font-semibold transition flex items-center gap-1 shrink-0 ${
+            className={`rounded-lg border px-1.5 sm:px-2 py-1 text-xs font-semibold transition flex items-center gap-1 shrink-0 ${
               isDark
                 ? "border-[#232c3d] bg-[#151b27] text-slate-200 hover:border-slate-500"
                 : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 shadow-xs"
@@ -542,16 +543,15 @@ function PresentContent({ onExit }: { onExit: () => void }) {
             title="Toggle Fullscreen (F)"
           >
             <span>{isFullscreen ? "🗗" : "⛶"}</span>
-            <span className="hidden 2xl:inline">{isFullscreen ? "Window" : "Full"}</span>
           </button>
 
           {/* Exit Presentation Mode - PROMINENT, PINNED & SHRINK-0 (ALWAYS 100% VISIBLE) */}
           <button
-            className="rounded-lg bg-[#c00000] hover:bg-[#a00000] active:scale-95 px-3 py-1 text-xs font-bold text-white shadow-md shadow-[#c00000]/30 transition flex items-center gap-1 shrink-0 cursor-pointer"
+            className="rounded-lg bg-[#c00000] hover:bg-[#a00000] active:scale-95 px-3 py-1.5 text-xs font-extrabold text-white shadow-md shadow-[#c00000]/30 transition flex items-center gap-1 shrink-0 cursor-pointer"
             onClick={handleExit}
             title="Exit Presentation Mode (Esc)"
           >
-            <span>✕</span>
+            <span className="font-bold">✕</span>
             <span>Exit</span>
           </button>
         </div>

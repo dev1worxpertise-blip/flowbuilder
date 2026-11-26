@@ -76,6 +76,12 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
+    if (response.status === 502 || response.status === 503) {
+      throw new Error("Backend server is offline or unreachable (502 Bad Gateway). Please verify flowchart-backend is running on port 5055.");
+    }
+    if (response.status === 504) {
+      throw new Error("Gateway timeout (504). Backend server did not respond in time.");
+    }
     throw new Error(data.error || `Request failed with status ${response.status}`);
   }
 

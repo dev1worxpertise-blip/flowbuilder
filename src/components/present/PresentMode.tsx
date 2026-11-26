@@ -344,7 +344,7 @@ function PresentContent({ onExit }: { onExit: () => void }) {
           : "border-slate-200 bg-white/95 text-slate-800 shadow-xs"
       }`}>
         {/* Left: Brand & Diagram Title (Flex with min-w-0 to allow graceful truncation) */}
-        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 max-w-[130px] sm:max-w-[180px] md:max-w-[220px] lg:max-w-xs xl:max-w-sm shrink">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 max-w-[120px] sm:max-w-[160px] md:max-w-[200px] shrink-0">
           {/* Worxpertise Logo Badge */}
           <div className="bg-white p-1 px-1.5 rounded-lg border border-slate-200 shadow-xs flex items-center shrink-0">
             <img
@@ -364,17 +364,7 @@ function PresentContent({ onExit }: { onExit: () => void }) {
               <h1 className={`text-xs sm:text-sm font-extrabold leading-tight truncate ${isDark ? "text-white" : "text-slate-900"}`} title={diagram.name}>
                 {diagram.name}
               </h1>
-              <span className={`hidden lg:inline-flex rounded-full px-2 py-0.5 text-[9px] font-bold border shrink-0 ${
-                isDark
-                  ? "bg-[#c00000]/15 border-[#c00000]/40 text-[#ff4040]"
-                  : "bg-rose-50 border-rose-200/80 text-[#c00000]"
-              }`}>
-                Present
-              </span>
             </div>
-            <p className={`hidden 2xl:block text-[10px] truncate ${isDark ? "text-slate-400" : "text-slate-500"}`}>
-              Worxpertise Flow Studio — Interactive Architecture Walkthrough
-            </p>
           </div>
         </div>
 
@@ -443,11 +433,11 @@ function PresentContent({ onExit }: { onExit: () => void }) {
 
         {/* Right Controls - ALWAYS PINNED, SHRINK-0, AND NEVER CUT OFF */}
         <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-auto">
-          {/* Flow Speed Toggles */}
-          <div className={`hidden xl:flex items-center rounded-lg border px-1 py-0.5 text-xs ${
+          {/* Flow Speed Toggles (Shown on ultra-wide screens) */}
+          <div className={`hidden 2xl:flex items-center rounded-lg border px-1 py-0.5 text-xs ${
             isDark ? "border-[#232c3d] bg-[#151b27] text-slate-400" : "border-slate-200 bg-white text-slate-700 shadow-xs"
           }`}>
-            <span className="text-[10px] px-1 font-semibold text-slate-400 hidden 2xl:inline">Flow:</span>
+            <span className="text-[10px] px-1 font-semibold text-slate-400">Flow:</span>
             {[1, 2, 3].map((spd) => (
               <button
                 key={spd}
@@ -476,7 +466,7 @@ function PresentContent({ onExit }: { onExit: () => void }) {
             title={playing ? "Pause animation flows" : "Resume animation flows"}
           >
             <span>{playing ? "⏸" : "▶"}</span>
-            <span className="hidden xl:inline">{playing ? "Pause" : "Resume"}</span>
+            <span className="hidden 2xl:inline">{playing ? "Pause" : "Resume"}</span>
           </button>
 
           {/* Reset Walkthrough */}
@@ -495,7 +485,7 @@ function PresentContent({ onExit }: { onExit: () => void }) {
             title="Restart Walkthrough"
           >
             <span>↺</span>
-            <span className="hidden xl:inline ml-0.5">Reset</span>
+            <span className="hidden 2xl:inline ml-0.5">Reset</span>
           </button>
 
           {/* Theme Toggle (Worxpertise Light vs Dark) */}
@@ -529,7 +519,7 @@ function PresentContent({ onExit }: { onExit: () => void }) {
             title="Customer Call Experience (CX) — View live caller & AI bot conversation"
           >
             <span>🎧</span>
-            <span className="hidden xl:inline">Call CX</span>
+            <span className="hidden 2xl:inline">Call CX</span>
           </button>
 
           {/* Fullscreen Toggle */}
